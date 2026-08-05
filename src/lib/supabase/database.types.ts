@@ -751,6 +751,10 @@ export type Database = {
         Args: { p_item_id: string; p_list_price: number }
         Returns: undefined
       }
+      purchase_item: {
+        Args: { p_item_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "buyer" | "seller" | "ops_agent" | "driver" | "admin"

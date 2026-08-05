@@ -19,6 +19,7 @@ export async function SiteHeader() {
             <>
               <Link href="/sell" className="transition-colors hover:text-ink">Sell</Link>
               <Link href="/my-items" className="transition-colors hover:text-ink">My items</Link>
+              <Link href="/purchases" className="hidden transition-colors hover:text-ink sm:inline">Purchases</Link>
               <ThemeToggle />
               <form action={signOut}>
                 <button className="rounded-full border border-border px-3 py-1.5 transition-colors hover:border-ink">
