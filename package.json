@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 8110",
     "build": "next build",
-    "start": "next start -p 8110",
+    "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test \"src/lib/domain/**/*.test.ts\""
