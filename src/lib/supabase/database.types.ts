@@ -157,6 +157,35 @@ export type Database = {
           },
         ]
       }
+      item_metrics: {
+        Row: {
+          item_id: string
+          views: number
+          saves: number
+          updated_at: string
+        }
+        Insert: {
+          item_id: string
+          views?: number
+          saves?: number
+          updated_at?: string
+        }
+        Update: {
+          item_id?: string
+          views?: number
+          saves?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_metrics_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_photos: {
         Row: {
           created_at: string
@@ -754,6 +783,14 @@ export type Database = {
       purchase_item: {
         Args: { p_item_id: string }
         Returns: string
+      }
+      record_item_view: {
+        Args: { p_item_id: string }
+        Returns: undefined
+      }
+      record_item_save: {
+        Args: { p_item_id: string; p_delta: number }
+        Returns: undefined
       }
     }
     Enums: {

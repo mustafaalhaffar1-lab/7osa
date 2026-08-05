@@ -8,7 +8,17 @@ import { formatMoney } from "@/lib/format";
 import { useCart } from "@/components/store/CartProvider";
 import { purchaseItem, makeOffer } from "../actions";
 
-export function BuyPanel({ itemId, price, isAuthed }: { itemId: string; price: number | null; isAuthed: boolean }) {
+export function BuyPanel({
+  itemId,
+  price,
+  isAuthed,
+  title,
+}: {
+  itemId: string;
+  price: number | null;
+  isAuthed: boolean;
+  title?: string;
+}) {
   const router = useRouter();
   const { has, add, remove } = useCart();
   const [pending, start] = useTransition();
@@ -27,17 +37,6 @@ export function BuyPanel({ itemId, price, isAuthed }: { itemId: string; price: n
     </button>
   );
 
-  if (!isAuthed) {
-    return (
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/login" className="inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-3 font-medium text-brand-fg hover:opacity-90 sm:w-auto">
-          Sign in to buy
-        </Link>
-        {cartButton}
-      </div>
-    );
-  }
-
   function buy() {
     setError(null);
     start(async () => {
@@ -52,8 +51,56 @@ export function BuyPanel({ itemId, price, isAuthed }: { itemId: string; price: n
     start(async () => {
       const res = await makeOffer(itemId, parseFloat(offer));
       if ("error" in res) setError(res.error);
-      else { setOfferSent(true); setOffer(""); }
+      else {
+        setOfferSent(true);
+        setOffer("");
+      }
     });
+  }
+
+  // Sticky mobile bar — the buy action never scrolls away on a phone.
+  const stickyBar = (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur sm:hidden">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          {title && <div className="truncate text-xs text-muted">{title}</div>}
+          <div className="text-lg font-bold">{price != null ? formatMoney(price) : "—"}</div>
+        </div>
+        {isAuthed ? (
+          <button
+            onClick={buy}
+            disabled={pending || price == null}
+            className="shrink-0 rounded-full bg-brand px-6 py-2.5 font-semibold text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {pending ? "…" : "Buy now"}
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="shrink-0 rounded-full bg-brand px-6 py-2.5 font-semibold text-brand-fg hover:opacity-90"
+          >
+            Sign in to buy
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!isAuthed) {
+    return (
+      <>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/login"
+            className="inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-3 font-medium text-brand-fg hover:opacity-90 sm:w-auto"
+          >
+            Sign in to buy
+          </Link>
+          {cartButton}
+        </div>
+        {stickyBar}
+      </>
+    );
   }
 
   return (
@@ -62,7 +109,7 @@ export function BuyPanel({ itemId, price, isAuthed }: { itemId: string; price: n
         <button
           onClick={buy}
           disabled={pending || price == null}
-          className="w-full rounded-full bg-brand px-6 py-3 font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-48"
+          className="w-full rounded-full bg-brand px-6 py-3 font-medium text-brand-fg transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 sm:w-auto sm:min-w-48"
         >
           {pending ? "Processing…" : `Buy now${price != null ? ` · ${formatMoney(price)}` : ""}`}
         </button>
@@ -77,14 +124,18 @@ export function BuyPanel({ itemId, price, isAuthed }: { itemId: string; price: n
           placeholder="Make an offer (AED)"
           className="w-44 rounded-full border border-border bg-surface px-4 py-2 text-sm outline-none focus:border-brand"
         />
-        <button onClick={sendOffer} disabled={pending || !offer}
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-ink disabled:opacity-50">
+        <button
+          onClick={sendOffer}
+          disabled={pending || !offer}
+          className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-ink disabled:opacity-50"
+        >
           Offer
         </button>
       </div>
 
       {offerSent && <p className="text-sm text-brand">Offer sent — we&apos;ll be in touch.</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {stickyBar}
     </div>
   );
 }

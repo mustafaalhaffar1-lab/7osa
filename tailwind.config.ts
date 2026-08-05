@@ -23,6 +23,11 @@ const config: Config = {
         xl: "0.9rem",
         "2xl": "1.25rem",
       },
+      boxShadow: {
+        card: "0 1px 2px rgb(0 0 0 / 0.04), 0 4px 12px rgb(0 0 0 / 0.05)",
+        "card-hover": "0 2px 4px rgb(0 0 0 / 0.05), 0 14px 28px rgb(0 0 0 / 0.11)",
+        pop: "0 8px 30px rgb(0 0 0 / 0.12)",
+      },
     },
   },
   plugins: [],
