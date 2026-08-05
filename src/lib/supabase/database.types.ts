@@ -733,6 +733,24 @@ export type Database = {
         Returns: string
       }
       is_staff: { Args: { uid: string }; Returns: boolean }
+      ops_set_status: {
+        Args: { p_item_id: string; p_to: Database["public"]["Enums"]["item_status"] }
+        Returns: undefined
+      }
+      ops_record_inspection: {
+        Args: {
+          p_item_id: string
+          p_condition: Database["public"]["Enums"]["condition_grade"]
+          p_functional: boolean
+          p_data_wipe: boolean
+          p_notes: string | null
+        }
+        Returns: undefined
+      }
+      ops_list_item: {
+        Args: { p_item_id: string; p_list_price: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "buyer" | "seller" | "ops_agent" | "driver" | "admin"

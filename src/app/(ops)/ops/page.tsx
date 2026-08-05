@@ -1,24 +1,40 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { SiteHeader } from "@/components/SiteHeader";
 import { BRAND } from "@/lib/brand";
+import { OpsBoard, type OpsItem } from "./OpsBoard";
 
-export const metadata = { title: `Ops — ${BRAND.name}` };
+export const metadata = { title: `Ops - ${BRAND.name}` };
 
-export default function OpsPage() {
-  return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
-      <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-muted hover:text-ink">
-        <ArrowLeft size={15} /> Back
-      </Link>
-      <h1 className="text-3xl font-semibold tracking-tight">Operations console</h1>
-      <p className="mt-3 text-muted">
-        Next up in the build: the internal ERP — intake queue, inspection & photography queues,
-        pricing approvals, warehouse shelving, logistics jobs board, and settlement.
-      </p>
-      <div className="mt-8 rounded-2xl border border-border bg-surface p-6 text-sm text-muted">
-        Ops console — scaffolded. Runs server-side with the service role; staff-gated via
-        `staff_roles`.
+export default async function OpsPage() {
+  const user = await getUser();
+  if (!user) redirect("/login");
+
+  const supabase = await createClient();
+  const { data: staff } = await supabase.rpc("is_staff", { uid: user.id });
+
+  if (!staff) {
+    return (
+      <div className="min-h-screen bg-bg text-ink">
+        <SiteHeader />
+        <main className="mx-auto max-w-md px-6 py-24 text-center">
+          <h1 className="text-xl font-semibold">Staff only</h1>
+          <p className="mt-2 text-muted">This area is for {BRAND.name} operations staff.</p>
+        </main>
       </div>
-    </main>
+    );
+  }
+
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, title, brand, status, possession, condition_grade, ai_estimate_min, ai_estimate_max, list_price, item_photos(url)")
+    .order("created_at", { ascending: false });
+
+  return (
+    <div className="min-h-screen bg-bg text-ink">
+      <SiteHeader />
+      <OpsBoard items={(items as OpsItem[]) ?? []} />
+    </div>
   );
 }
