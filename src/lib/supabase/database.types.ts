@@ -788,6 +788,36 @@ export type Database = {
         Args: { p_item_id: string }
         Returns: undefined
       }
+      is_admin: { Args: { uid: string }; Returns: boolean }
+      ops_set_price: {
+        Args: { p_item_id: string; p_price: number }
+        Returns: undefined
+      }
+      ops_set_order_status: {
+        Args: { p_order_id: string; p_status: Database["public"]["Enums"]["order_status"] }
+        Returns: undefined
+      }
+      ops_list_users: {
+        Args: Record<string, never>
+        Returns: {
+          id: string
+          email: string
+          full_name: string | null
+          created_at: string
+          balance: number
+          items_count: number
+          orders_count: number
+          roles: string[]
+        }[]
+      }
+      ops_set_staff_role: {
+        Args: {
+          p_user_id: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_grant: boolean
+        }
+        Returns: undefined
+      }
       record_item_save: {
         Args: { p_item_id: string; p_delta: number }
         Returns: undefined

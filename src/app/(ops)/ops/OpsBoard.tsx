@@ -50,8 +50,8 @@ export function OpsBoard({ items }: { items: OpsItem[] }) {
   }));
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Operations</h1>
+    <div>
+      <h1 className="text-xl font-semibold tracking-tight">Pipeline</h1>
       <p className="mt-1 text-sm text-muted">Move items from pickup to live. {items.length} in the pipeline.</p>
 
       <div className="mt-8 space-y-8">
@@ -73,7 +73,7 @@ export function OpsBoard({ items }: { items: OpsItem[] }) {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
 
