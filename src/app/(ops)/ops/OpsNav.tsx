@@ -13,21 +13,43 @@ const TABS = [
   { href: "/ops/settings", label: "Settings", icon: Settings },
 ];
 
-export function OpsNav() {
+export function OpsNav({ orientation = "vertical" }: { orientation?: "vertical" | "horizontal" }) {
   const pathname = usePathname();
+
+  if (orientation === "horizontal") {
+    return (
+      <nav className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {TABS.map((t) => {
+          const active = pathname === t.href;
+          return (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
+                active ? "bg-brand text-brand-fg" : "text-muted hover:bg-bg hover:text-ink"
+              }`}
+            >
+              <t.icon size={14} /> {t.label}
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
+
   return (
-    <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-border bg-surface p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav className="space-y-0.5">
       {TABS.map((t) => {
         const active = pathname === t.href;
         return (
           <Link
             key={t.href}
             href={t.href}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
               active ? "bg-brand text-brand-fg" : "text-muted hover:bg-bg hover:text-ink"
             }`}
           >
-            <t.icon size={15} /> {t.label}
+            <t.icon size={16} /> {t.label}
           </Link>
         );
       })}
