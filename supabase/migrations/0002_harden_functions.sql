@@ -1,4 +1,4 @@
--- 7osa - function hardening (addresses Supabase security advisors)
+-- Hoosa - function hardening (addresses Supabase security advisors)
 -- 1. Pin search_path on trigger/util functions (prevents search_path injection).
 -- 2. Revoke RPC EXECUTE on internal SECURITY DEFINER functions. handle_new_user only ever
 --    runs from the auth.users trigger (trigger execution does not need EXECUTE), and is_staff

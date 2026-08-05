@@ -1,4 +1,4 @@
--- 7osa - ops console: let staff read the whole board and advance items through the lifecycle.
+-- Hoosa - ops console: let staff read the whole board and advance items through the lifecycle.
 -- Reads use staff RLS policies (is_staff); mutations use staff-gated SECURITY DEFINER RPCs,
 -- so the internal console works on the anon key + a staff session (no service-role key needed).
 

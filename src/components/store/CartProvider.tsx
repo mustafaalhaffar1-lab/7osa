@@ -17,7 +17,7 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const KEY = "7osa-cart";
+const KEY = "hoosa-cart";
 
 function read(): string[] {
   try {

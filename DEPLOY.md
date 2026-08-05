@@ -48,7 +48,7 @@ Point your domain at it with nginx (`/etc/nginx/sites-available/7osa`):
 ```nginx
 server {
   listen 80;
-  server_name 7osa.ae www.7osa.ae;   # your domain
+  server_name hoosa.ae www.hoosa.ae;   # your domain
   location / {
     proxy_pass http://localhost:3000;
     proxy_http_version 1.1;
@@ -64,7 +64,7 @@ server {
 sudo ln -s /etc/nginx/sites-available/7osa /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d 7osa.ae -d www.7osa.ae   # free HTTPS
+sudo certbot --nginx -d hoosa.ae -d www.hoosa.ae   # free HTTPS
 ```
 
 Redeploy after a push: `git pull && npm ci && npm run build && pm2 restart 7osa`.
@@ -100,7 +100,7 @@ If the Node.js App tool isn't in your plan, use Path A (VPS) or Path C.
 ## After deploying (any path) — Supabase Auth
 
 In Supabase → Authentication → URL Configuration, set:
-- **Site URL**: your production URL (e.g. `https://7osa.ae`)
+- **Site URL**: your production URL (e.g. `https://hoosa.ae`)
 - **Redirect URLs**: add the same origin.
 
 Real sign-ups currently require **email confirmation** (Authentication → Providers → Email).

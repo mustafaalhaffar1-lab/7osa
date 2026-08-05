@@ -30,7 +30,7 @@ const CONDITION_LABEL: Record<string, string> = {
   fair: "Fair",
 };
 
-const WISH_KEY = "7osa-wishlist";
+const WISH_KEY = "hoosa-wishlist";
 
 function readWishlist(): string[] {
   try {

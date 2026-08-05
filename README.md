@@ -1,4 +1,4 @@
-# 7osa - Managed Resale Concierge
+# Hoosa - Managed Resale Concierge
 
 Sell everything in your home; do nothing. We collect, inspect, photograph, price, sell, and
 deliver - the seller just snaps a photo and gets paid. Concierge, not a marketplace.

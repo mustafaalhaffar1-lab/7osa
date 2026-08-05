@@ -1,4 +1,4 @@
--- 7osa - seller intake: photo storage, photo insert policy, and the create_intake RPC.
+-- Hoosa - seller intake: photo storage, photo insert policy, and the create_intake RPC.
 
 -- ---------------------------------------------------------------------------
 -- Storage: public bucket for item photos

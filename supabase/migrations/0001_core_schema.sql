@@ -1,4 +1,4 @@
--- 7osa - core schema (Phase 6 data model, delivered as code)
+-- Hoosa - core schema (Phase 6 data model, delivered as code)
 -- Managed resale concierge for home goods. Category-agnostic item model with a
 -- dual-possession lifecycle (warehouse vs collect-on-sale). Mirrors src/lib/domain/*.
 --

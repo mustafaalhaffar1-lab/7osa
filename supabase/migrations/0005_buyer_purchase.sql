@@ -1,4 +1,4 @@
--- 7osa - buyer storefront: let buyers read the inspection report on live items, and buy.
+-- Hoosa - buyer storefront: let buyers read the inspection report on live items, and buy.
 
 -- Condition reports are a core trust signal on the PDP - readable for live items.
 create policy inspections_public_read on public.inspections for select using (

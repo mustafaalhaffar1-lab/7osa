@@ -1,8 +1,8 @@
 {
-  "name": "7osa",
+  "name": "hoosa",
   "version": "0.1.0",
   "private": true,
-  "description": "7osa — managed resale concierge for home goods (UAE). Rebrandable via src/lib/brand.ts",
+  "description": "Hoosa — managed resale concierge for home goods (UAE). Rebrandable via src/lib/brand.ts",
   "scripts": {
     "dev": "next dev -p 8110",
     "build": "next build",
