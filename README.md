@@ -1,26 +1,26 @@
-# Reloop — Managed Resale Concierge (working codename)
+# 7osa - Managed Resale Concierge
 
 Sell everything in your home; do nothing. We collect, inspect, photograph, price, sell, and
-deliver — the seller just snaps a photo and gets paid. Concierge, not a marketplace.
+deliver - the seller just snaps a photo and gets paid. Concierge, not a marketplace.
 
 **Launch market:** Dubai, UAE. **Launch scope:** any home good *except* oversized furniture
-(no couches/beds) — one-driver logistics. **Categories:** electronics, small appliances,
+(no couches/beds) - one-driver logistics. **Categories:** electronics, small appliances,
 home & kitchen, compact furniture, sports/outdoor.
 
 ## The three strategic decisions baked into the code
 
 1. **Value floor (AED 500).** Handling cost is mostly fixed per item, so cheap items lose money
-   at any commission. Below-floor items route to a future self-serve tier — never accepted at a loss.
-   → `src/lib/domain/commission.ts`, `intake.ts`; DB `settings.value_floor`, `commission_tiers`.
+   at any commission. Below-floor items route to a future self-serve tier - never accepted at a loss.
+   -> `src/lib/domain/commission.ts`, `intake.ts`; DB `settings.value_floor`, `commission_tiers`.
 2. **Hybrid possession.** Small/high-value items come into the warehouse (auth + fast delivery);
    bulky items stay with the seller until sold (collect-on-sale) to avoid storage cost.
-   → `src/lib/domain/item-state.ts` dual state machine; `items.possession`.
+   -> `src/lib/domain/item-state.ts` dual state machine; `items.possession`.
 3. **Markdown clock with a seller floor + auto return/donate at expiry.** No dead stock.
-   → DB `settings.markdown_clock`, `items.sell_by` (engine wired in a later milestone).
+   -> DB `settings.markdown_clock`, `items.sell_by` (engine wired in a later milestone).
 
 ## Stack
 
-- **Next.js 15** (App Router) + **React 19** + **Tailwind** — modular monolith, not microservices
+- **Next.js 15** (App Router) + **React 19** + **Tailwind** - modular monolith, not microservices
   (pre-PMF: velocity over premature distribution).
 - **Supabase** (Postgres + RLS + Auth + Storage + Edge Functions).
 - Search (Typesense/Meilisearch) and payments (Stripe/Tabby) land in their own milestones.
@@ -31,8 +31,8 @@ home & kitchen, compact furniture, sports/outdoor.
 src/
   app/
     page.tsx            landing (marketing)
-    (seller)/sell       seller intake  → AI valuation, intake gate, pickup
-    (buyer)/shop        buyer storefront → search, PDP, offers, checkout
+    (seller)/sell       seller intake  -> AI valuation, intake gate, pickup
+    (buyer)/shop        buyer storefront -> search, PDP, offers, checkout
     (ops)/ops           internal ERP (service-role, staff-gated)
   lib/
     brand.ts            single rename point
@@ -42,7 +42,7 @@ src/
       item-state.ts     dual-possession lifecycle
       enums.ts          shared enums (lockstep with DB enum types)
     supabase/           browser + server + service-role clients
-supabase/migrations/    0001_core_schema.sql  ← the spine
+supabase/migrations/    0001_core_schema.sql  <- the spine
 ```
 
 ## Develop
@@ -50,7 +50,7 @@ supabase/migrations/    0001_core_schema.sql  ← the spine
 ```bash
 npm install
 npm run dev        # http://localhost:8110
-npm test           # domain logic (money + lifecycle) — must stay green
+npm test           # domain logic (money + lifecycle) - must stay green
 npm run typecheck
 ```
 

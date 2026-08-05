@@ -1,4 +1,4 @@
--- Reloop — core schema (Phase 6 data model, delivered as code)
+-- 7osa - core schema (Phase 6 data model, delivered as code)
 -- Managed resale concierge for home goods. Category-agnostic item model with a
 -- dual-possession lifecycle (warehouse vs collect-on-sale). Mirrors src/lib/domain/*.
 --
@@ -76,7 +76,7 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ---------------------------------------------------------------------------
--- Config (admin-editable — nothing here should require a developer)
+-- Config (admin-editable - nothing here should require a developer)
 -- ---------------------------------------------------------------------------
 create table public.settings (
   key        text primary key,
@@ -471,5 +471,5 @@ create policy payouts_self on public.payouts for select using (seller_id = auth.
 create policy notifications_self on public.notifications for select using (user_id = auth.uid());
 
 -- NOTE: staff_roles, settings writes, inspections, logistics_jobs, item_events are
--- intentionally left without permissive client policies — they are service-role only until
+-- intentionally left without permissive client policies - they are service-role only until
 -- the ops console + column-level GRANT hardening migration lands.

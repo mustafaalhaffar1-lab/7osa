@@ -1,8 +1,8 @@
 {
-  "name": "reloop",
+  "name": "7osa",
   "version": "0.1.0",
   "private": true,
-  "description": "Reloop — managed resale concierge for home goods (UAE). Working codename; rebrandable via src/lib/brand.ts",
+  "description": "7osa — managed resale concierge for home goods (UAE). Rebrandable via src/lib/brand.ts",
   "scripts": {
     "dev": "next dev -p 8110",
     "build": "next build",
