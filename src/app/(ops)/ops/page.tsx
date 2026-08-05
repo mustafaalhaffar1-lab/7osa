@@ -11,13 +11,14 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
+import { PayoutQueue, type QueuedPayout } from "./PayoutQueue";
 
 export const dynamic = "force-dynamic";
 
 export default async function OpsDashboard() {
   const supabase = await createClient();
 
-  const [{ data: orders }, { data: items }, { data: wallets }, { data: payouts }] =
+  const [{ data: orders }, { data: items }, { data: wallets }, { data: payouts }, { data: payoutQueue }] =
     await Promise.all([
       supabase
         .from("orders")
@@ -26,6 +27,11 @@ export default async function OpsDashboard() {
       supabase.from("items").select("id, status, list_price"),
       supabase.from("wallets").select("balance"),
       supabase.from("payouts").select("amount, status"),
+      supabase
+        .from("payouts")
+        .select("id, amount, method, status, created_at, profiles(full_name)")
+        .in("status", ["requested", "processing"])
+        .order("created_at", { ascending: true }),
     ]);
 
   const validOrders = (orders ?? []).filter((o) => !["cancelled", "refunded"].includes(o.status));
@@ -76,6 +82,19 @@ export default async function OpsDashboard() {
         <Kpi icon={<Wallet size={16} />} label="Seller wallet liability" value={formatMoney(walletLiability)} />
         <Kpi icon={<Timer size={16} />} label="Pending payouts" value={formatMoney(pendingPayouts)} />
       </div>
+
+      <PayoutQueue
+        payouts={((payoutQueue as { id: string; amount: number; method: string; status: string; created_at: string; profiles: { full_name: string | null } | null }[]) ?? []).map(
+          (p): QueuedPayout => ({
+            id: p.id,
+            amount: Number(p.amount),
+            method: p.method,
+            status: p.status,
+            created_at: p.created_at,
+            seller: p.profiles?.full_name ?? null,
+          })
+        )}
+      />
 
       <h2 className="mt-8 text-sm font-semibold text-muted">Recent orders</h2>
       {!orders?.length ? (

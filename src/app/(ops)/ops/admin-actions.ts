@@ -33,6 +33,14 @@ export async function setOrderStatus(orderId: string, status: OrderStatus): Prom
   return {};
 }
 
+export async function processPayout(payoutId: string, status: "paid" | "failed"): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_process_payout", { p_payout_id: payoutId, p_status: status });
+  if (error) return { error: error.message };
+  revalidatePath("/ops");
+  return {};
+}
+
 export async function setStaffRole(userId: string, role: AppRole, grant: boolean): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_staff_role", { p_user_id: userId, p_role: role, p_grant: grant });

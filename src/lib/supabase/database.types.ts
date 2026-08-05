@@ -548,7 +548,15 @@ export type Database = {
           seller_id?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       price_history: {
         Row: {
@@ -789,6 +797,14 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
+      request_payout: {
+        Args: { p_amount: number; p_method?: string }
+        Returns: string
+      }
+      ops_process_payout: {
+        Args: { p_payout_id: string; p_status: string }
+        Returns: undefined
+      }
       ops_set_price: {
         Args: { p_item_id: string; p_price: number }
         Returns: undefined
