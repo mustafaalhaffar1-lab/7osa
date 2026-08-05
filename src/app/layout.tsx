@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
+import { CartProvider } from "@/components/store/CartProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
@@ -19,7 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: noFlash }} />
       </head>
-      <body className={inter.variable}>{children}</body>
+      <body className={inter.variable}>
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   );
 }
