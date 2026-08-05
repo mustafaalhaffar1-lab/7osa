@@ -1,5 +1,6 @@
-// AUTO-GENERATED from the Supabase schema. Do not edit by hand.
-// Regenerate after migrations: Supabase MCP generate_typescript_types (project xgjywqhkdwuhbypnooow).
+// AUTO-GENERATED from the Supabase schema (project xgjywqhkdwuhbypnooow), lightly hand-adjusted:
+// create_intake's optional args are relaxed to `| null` (the generator marks them required).
+// Regenerate after migrations via Supabase MCP generate_typescript_types, then re-apply that tweak.
 
 export type Json =
   | string
@@ -105,7 +106,15 @@ export type Database = {
           notes?: string | null
           report?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inspections_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       item_events: {
         Row: {
@@ -138,7 +147,15 @@ export type Database = {
           metadata?: Json
           to_status?: Database["public"]["Enums"]["item_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "item_events_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       item_photos: {
         Row: {
@@ -165,7 +182,15 @@ export type Database = {
           sort?: number
           url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "item_photos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       items: {
         Row: {
@@ -264,13 +289,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "items_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "items_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
@@ -325,7 +343,29 @@ export type Database = {
           updated_at?: string
           zone_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "logistics_jobs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logistics_jobs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logistics_jobs_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -385,7 +425,15 @@ export type Database = {
           item_id?: string
           status?: Database["public"]["Enums"]["offer_status"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "offers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
@@ -495,7 +543,15 @@ export type Database = {
           price?: number
           reason?: Database["public"]["Enums"]["price_change_reason"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "price_history_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -543,7 +599,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallet_transactions: {
         Row: {
@@ -576,7 +640,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["wallet_txn_type"]
           wallet_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallets: {
         Row: {
@@ -636,6 +708,29 @@ export type Database = {
           marketplace_pct: number
           seller_payout: number
         }[]
+      }
+      create_intake: {
+        Args: {
+          p_address: string | null
+          p_brand: string | null
+          p_category_id: string | null
+          p_condition: Database["public"]["Enums"]["condition_grade"]
+          p_confidence: number
+          p_estimate_max: number
+          p_estimate_min: number
+          p_longest_side_cm: number | null
+          p_model: string | null
+          p_photo_urls: string[] | null
+          p_pickup_from: string | null
+          p_pickup_to: string | null
+          p_possession: Database["public"]["Enums"]["possession_mode"]
+          p_retail_price: number | null
+          p_seller_min_price: number | null
+          p_title: string
+          p_weight_kg: number | null
+          p_zone_id: string | null
+        }
+        Returns: string
       }
       is_staff: { Args: { uid: string }; Returns: boolean }
     }
