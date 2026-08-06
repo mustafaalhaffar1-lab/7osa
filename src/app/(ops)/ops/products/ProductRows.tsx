@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Heart } from "lucide-react";
+import { Eye, Heart, QrCode } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { ITEM_STATUSES, type ItemStatus } from "@/lib/domain/item-state";
 import { setItemPrice, overrideItemStatus } from "../admin-actions";
 
 export type AdminItem = {
   id: string;
+  sku: string | null;
   title: string;
   brand: string | null;
   status: ItemStatus;
@@ -22,41 +24,83 @@ export type AdminItem = {
   item_metrics: { views: number; saves: number } | { views: number; saves: number }[] | null;
 };
 
-export function ProductRows({ items }: { items: AdminItem[] }) {
-  const [filter, setFilter] = useState<string>("");
+/** Once an item sells (or otherwise leaves the working pipeline) it's archived out of the
+ * default list. Active = the pre-sale pipeline + live listings. */
+const ARCHIVED: ReadonlySet<string> = new Set([
+  "sold",
+  "collection_scheduled",
+  "in_transit",
+  "delivered",
+  "completed",
+  "returned",
+  "withdrawn",
+  "declined",
+  "unsold_expired",
+]);
 
-  const filtered = filter ? items.filter((i) => i.status === filter) : items;
-  const statuses = [...new Set(items.map((i) => i.status))];
+export function ProductRows({ items }: { items: AdminItem[] }) {
+  const [filter, setFilter] = useState<string>(""); // "" = active, "archived", or a status
+
+  const active = items.filter((i) => !ARCHIVED.has(i.status));
+  const archived = items.filter((i) => ARCHIVED.has(i.status));
+  const activeStatuses = [...new Set(active.map((i) => i.status))];
+
+  const filtered =
+    filter === ""
+      ? active
+      : filter === "archived"
+        ? archived
+        : items.filter((i) => i.status === filter);
 
   return (
     <div className="mt-4">
       <div className="flex flex-wrap gap-1.5 text-xs">
-        <Chip label={`All (${items.length})`} active={!filter} onClick={() => setFilter("")} />
-        {statuses.map((s) => (
+        <Chip label={`Active (${active.length})`} active={!filter} onClick={() => setFilter("")} />
+        {activeStatuses.map((s) => (
           <Chip
             key={s}
-            label={`${s.replace(/_/g, " ")} (${items.filter((i) => i.status === s).length})`}
+            label={`${s.replace(/_/g, " ")} (${active.filter((i) => i.status === s).length})`}
             active={filter === s}
             onClick={() => setFilter(s)}
           />
         ))}
+        <Chip label={`Archived (${archived.length})`} active={filter === "archived"} onClick={() => setFilter("archived")} archived />
       </div>
 
       <ul className="mt-4 space-y-2">
         {filtered.map((item) => (
           <Row key={item.id} item={item} />
         ))}
+        {filtered.length === 0 && (
+          <li className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
+            Nothing here.
+          </li>
+        )}
       </ul>
     </div>
   );
 }
 
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function Chip({
+  label,
+  active,
+  onClick,
+  archived,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  archived?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
       className={`rounded-full px-3 py-1.5 font-medium capitalize transition-colors ${
-        active ? "bg-brand text-brand-fg" : "border border-border bg-surface text-muted hover:text-ink"
+        active
+          ? "bg-brand text-brand-fg"
+          : archived
+            ? "border border-border bg-surface text-muted hover:text-ink"
+            : "border border-border bg-surface text-muted hover:text-ink"
       }`}
     >
       {label}
@@ -96,7 +140,8 @@ function Row({ item }: { item: AdminItem }) {
             {item.brand ? `${item.brand} · ` : ""}
             {item.title}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
+            {item.sku && <span className="font-mono text-[11px] text-ink/70">{item.sku}</span>}
             <span className="capitalize">{item.status.replace(/_/g, " ")}</span>
             <span>·</span>
             <span>{item.possession === "warehouse" ? "Warehouse" : "In place"}</span>
@@ -112,6 +157,15 @@ function Row({ item }: { item: AdminItem }) {
             )}
           </div>
         </div>
+
+        {/* Print label */}
+        <Link
+          href={`/label/${item.id}`}
+          title="Print barcode label"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-brand hover:text-brand"
+        >
+          <QrCode size={13} /> Label
+        </Link>
 
         {/* Reprice */}
         <div className="flex items-center gap-1.5">

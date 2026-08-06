@@ -11,3 +11,7 @@ export const BRAND = {
   supportEmail: "hello@hoosa.ae",
   city: "Dubai",
 } as const;
+
+/** Absolute base URL used for printed QR labels (must point at production). */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hoosa.vercel.app";
+
