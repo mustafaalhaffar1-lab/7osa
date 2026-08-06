@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { OrderStatus, AppRole } from "@/lib/domain/enums";
+import type { OrderStatus, AppRole, ConditionGrade } from "@/lib/domain/enums";
 import type { ItemStatus, PossessionMode } from "@/lib/domain/item-state";
 
 type Result = { error?: string };
@@ -30,6 +30,78 @@ export async function setOrderStatus(orderId: string, status: OrderStatus): Prom
   const { error } = await supabase.rpc("ops_set_order_status", { p_order_id: orderId, p_status: status });
   if (error) return { error: error.message };
   revalidatePath("/ops/orders");
+  return {};
+}
+
+export async function setVisitStatus(visitId: string, status: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_set_visit_status", { p_visit_id: visitId, p_status: status });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/visits");
+  return {};
+}
+
+export async function addItemFromVisit(input: {
+  visitId: string;
+  title: string;
+  categoryId: string | null;
+  brand: string;
+  condition: ConditionGrade;
+  estimateMin: number;
+  estimateMax: number;
+  sellerMinPrice: number | null;
+  retailPrice: number | null;
+}): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_add_item_from_visit", {
+    p_visit_id: input.visitId,
+    p_title: input.title,
+    p_category_id: input.categoryId,
+    p_brand: input.brand || null,
+    p_condition: input.condition,
+    p_estimate_min: input.estimateMin,
+    p_estimate_max: input.estimateMax,
+    p_seller_min_price: input.sellerMinPrice,
+    p_retail_price: input.retailPrice,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/ops/visits/${input.visitId}`);
+  revalidatePath("/ops/pipeline");
+  return {};
+}
+
+export async function acceptOffer(offerId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_accept_offer", { p_offer_id: offerId });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/offers");
+  return {};
+}
+
+export async function declineOffer(offerId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_decline_offer", { p_offer_id: offerId });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/offers");
+  return {};
+}
+
+export async function assignJob(jobId: string, driverId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_assign_job", { p_job_id: jobId, p_driver_id: driverId });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/logistics");
+  return {};
+}
+
+export async function setJobStatus(
+  jobId: string,
+  status: "unassigned" | "assigned" | "en_route" | "completed" | "failed"
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_set_job_status", { p_job_id: jobId, p_status: status });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/logistics");
   return {};
 }
 

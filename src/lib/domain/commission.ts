@@ -55,7 +55,14 @@ export class BelowFloorError extends Error {
 
 /**
  * Split a sale price into marketplace commission and seller payout.
- * Throws BelowFloorError below VALUE_FLOOR — a below-floor item should never reach settlement.
+ *
+ * This is the INTAKE/QUOTING implementation: it throws below VALUE_FLOOR because we should
+ * never take an item on whose expected value is under the floor.
+ *
+ * SETTLEMENT deliberately differs — the SQL `calc_commission()` never throws and falls back
+ * to the lowest tier, because the markdown clock can legitimately drop a listed item below
+ * the floor over time and that item must still be sellable. Do not "align" these two: the
+ * floor is a rule about what we accept, not about what we can sell.
  */
 export function calcCommission(
   salePrice: number,

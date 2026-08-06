@@ -2,12 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Workflow, Package, Receipt, Users, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Workflow,
+  Package,
+  Receipt,
+  Users,
+  Settings,
+  CalendarCheck,
+  HandCoins,
+  Truck,
+} from "lucide-react";
 
 const TABS = [
   { href: "/ops", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/ops/visits", label: "Visits", icon: CalendarCheck },
   { href: "/ops/pipeline", label: "Pipeline", icon: Workflow },
+  { href: "/ops/logistics", label: "Logistics", icon: Truck },
   { href: "/ops/products", label: "Products", icon: Package },
+  { href: "/ops/offers", label: "Offers", icon: HandCoins },
   { href: "/ops/orders", label: "Orders", icon: Receipt },
   { href: "/ops/customers", label: "Customers", icon: Users },
   { href: "/ops/settings", label: "Settings", icon: Settings },

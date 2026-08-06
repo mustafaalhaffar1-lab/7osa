@@ -249,6 +249,7 @@ export type Database = {
           status: Database["public"]["Enums"]["item_status"]
           title: string
           updated_at: string
+          visit_id: string | null
           weight_kg: number | null
           zone_id: string | null
         }
@@ -279,6 +280,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["item_status"]
           title: string
           updated_at?: string
+          visit_id?: string | null
           weight_kg?: number | null
           zone_id?: string | null
         }
@@ -309,6 +311,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["item_status"]
           title?: string
           updated_at?: string
+          visit_id?: string | null
           weight_kg?: number | null
           zone_id?: string | null
         }
@@ -622,6 +625,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pickup_visits_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
         ]
       }
       price_history: {
@@ -876,6 +886,33 @@ export type Database = {
       }
       ops_set_visit_status: {
         Args: { p_visit_id: string; p_status: string }
+        Returns: undefined
+      }
+      ops_add_item_from_visit: {
+        Args: {
+          p_visit_id: string
+          p_title: string
+          p_category_id: string | null
+          p_brand: string | null
+          p_condition: Database["public"]["Enums"]["condition_grade"]
+          p_estimate_min: number
+          p_estimate_max: number
+          p_seller_min_price?: number | null
+          p_retail_price?: number | null
+        }
+        Returns: string
+      }
+      ops_accept_offer: { Args: { p_offer_id: string }; Returns: string }
+      ops_decline_offer: { Args: { p_offer_id: string }; Returns: undefined }
+      ops_assign_job: {
+        Args: { p_job_id: string; p_driver_id: string }
+        Returns: undefined
+      }
+      ops_set_job_status: {
+        Args: {
+          p_job_id: string
+          p_status: Database["public"]["Enums"]["logistics_job_status"]
+        }
         Returns: undefined
       }
       request_payout: {
