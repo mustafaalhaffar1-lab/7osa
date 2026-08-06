@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "./ThemeToggle";
 import { CartButton } from "./store/CartButton";
 import { AccountMenu } from "./store/AccountMenu";
+import { ScanButton } from "./store/ScanButton";
 
 /** Commerce header: logo · search · Sell · cart · account, with a category strip below. */
 export async function SiteHeader() {
@@ -26,7 +27,7 @@ export async function SiteHeader() {
             {BRAND.name}
           </Link>
 
-          {/* Search — plain GET form, works without JS */}
+          {/* Search — plain GET form, works without JS. Scan button reads a barcode/QR. */}
           <form action="/shop" method="get" className="hidden flex-1 sm:block">
             <div className="relative mx-auto max-w-xl">
               <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
@@ -34,8 +35,9 @@ export async function SiteHeader() {
                 name="q"
                 type="search"
                 placeholder="Search products, brands…"
-                className="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand"
+                className="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-11 text-sm outline-none transition-colors focus:border-brand"
               />
+              <ScanButton className="absolute right-1.5 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-brand/10 hover:text-brand" />
             </div>
           </form>
 
@@ -53,16 +55,17 @@ export async function SiteHeader() {
           </div>
         </div>
 
-        {/* Mobile search */}
+        {/* Mobile search — scan button is especially useful here (customers in-store on phones) */}
         <form action="/shop" method="get" className="pb-3 sm:hidden">
           <div className="relative">
             <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
             <input
               name="q"
               type="search"
-              placeholder="Search products, brands…"
-              className="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand"
+              placeholder="Search or scan a tag…"
+              className="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-11 text-sm outline-none focus:border-brand"
             />
+            <ScanButton className="absolute right-1.5 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-brand/10 hover:text-brand" />
           </div>
         </form>
 
