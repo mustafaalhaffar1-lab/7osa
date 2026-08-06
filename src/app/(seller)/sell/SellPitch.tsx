@@ -64,19 +64,38 @@ export function SellPitch({
           Skip the photos, the listings, the lowball offers, and the no-shows. Book a free pickup —
           we collect, inspect, clean, photograph, price, sell, and deliver. You just get paid.
         </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href={primaryHref}
-            className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-medium text-brand-fg transition-opacity hover:opacity-90"
-          >
-            {primaryLabel} <ArrowRight size={16} />
-          </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-6 py-3 font-medium transition-colors hover:border-ink"
-          >
-            Browse the shop
-          </Link>
+        {/* Two ways in — the concierge visit, or list it yourself */}
+        <div className="mx-auto mt-9 grid max-w-3xl gap-4 text-left sm:grid-cols-2">
+          <div className="flex flex-col rounded-2xl border-2 border-brand bg-surface p-6">
+            <div className="mb-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-fg">
+              Easiest
+            </div>
+            <h3 className="mt-1 text-lg font-semibold">We come to you</h3>
+            <p className="mt-1 flex-1 text-sm text-muted">
+              An agent visits, values everything on the spot, and takes what you agree to sell.
+              AED 50 — credited back in full on your first sale.
+            </p>
+            <Link
+              href={isAuthed ? "/sell/visit" : "/login"}
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-fg transition-opacity hover:opacity-90"
+            >
+              Book a pickup visit <ArrowRight size={15} />
+            </Link>
+          </div>
+
+          <div className="flex flex-col rounded-2xl border border-border bg-surface p-6">
+            <h3 className="text-lg font-semibold">List it yourself</h3>
+            <p className="mt-1 flex-1 text-sm text-muted">
+              Snap a photo, we identify it and suggest a price range, you pick your price.
+              Then we collect it — or leave it home until it sells.
+            </p>
+            <Link
+              href={primaryHref}
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold transition-colors hover:border-ink"
+            >
+              {primaryLabel} <ArrowRight size={15} />
+            </Link>
+          </div>
         </div>
       </section>
 

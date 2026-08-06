@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, PackageCheck, Home, Ban } from "lucide-react";
 import { CONDITION_GRADES, type ConditionGrade } from "@/lib/domain/enums";
+import type { PossessionMode } from "@/lib/domain/item-state";
 import { estimateValue } from "@/lib/domain/valuation";
 import { assessIntake } from "@/lib/domain/intake";
 import { calcCommission } from "@/lib/domain/commission";
@@ -50,6 +51,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
   const [sellerTarget, setSellerTarget] = useState("");
   const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
   const [address, setAddress] = useState("");
+  const [custodyChoice, setCustody] = useState<PossessionMode | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -80,6 +82,9 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
     return { valuation, decision, payoutLow, payoutHigh };
   }, [categoryName, condition, brand, retail, weight, side]);
 
+  // Seller can override our custody recommendation ("keep it until it sells").
+  const custody: PossessionMode = custodyChoice ?? quote.decision.possession ?? "warehouse";
+
   async function handlePhotos(files: FileList | null) {
     if (!files?.length) return;
     setUploading(true);
@@ -106,7 +111,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
       brand,
       model,
       condition,
-      possession: quote.decision.possession ?? "warehouse",
+      possession: custody,
       weightKg: num(weight),
       longestSideCm: num(side),
       estimateMin: quote.valuation.estimateMin,
@@ -129,7 +134,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
+    <div className="px-4 py-6 sm:px-6">
       <Steps step={step} />
 
       {step === 1 && (
@@ -183,16 +188,40 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
           <QuoteCard quote={quote} title={title} />
 
           {quote.decision.route === "concierge" && (
-            <div className="space-y-4 rounded-2xl border border-border bg-surface p-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Text label="Preferred starting price, AED (optional)" value={sellerTarget}
-                  onChange={setSellerTarget} placeholder={String(quote.valuation.estimateMax)} inputMode="numeric" />
-                <Text label="Your minimum price, AED (we never sell below this)" value={sellerMin}
-                  onChange={setSellerMin} placeholder={String(quote.valuation.estimateMin)} inputMode="numeric" />
+            <div className="space-y-5 rounded-2xl border border-border bg-surface p-6">
+              {/* Pick your starting price from the suggested range — payout updates live */}
+              <PricePicker
+                min={quote.valuation.estimateMin}
+                max={quote.valuation.estimateMax}
+                value={sellerTarget}
+                onChange={setSellerTarget}
+              />
+
+              <Text label="Your minimum price, AED (we never sell below this)" value={sellerMin}
+                onChange={setSellerMin} placeholder={String(quote.valuation.estimateMin)} inputMode="numeric" />
+
+              {/* Custody choice — collect now, or keep it until it sells */}
+              <div>
+                <span className="mb-1.5 block text-sm font-medium">How should we handle it?</span>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <CustodyOption
+                    active={custody === "warehouse"}
+                    onClick={() => setCustody("warehouse")}
+                    title="Collect it now"
+                    body="We pick it up, store, and ship it the moment it sells — fastest delivery for buyers."
+                  />
+                  <CustodyOption
+                    active={custody === "in_place"}
+                    onClick={() => setCustody("in_place")}
+                    title="Keep it until it sells"
+                    body="Stays at your place. We only collect once someone buys it."
+                  />
+                </div>
               </div>
-              <Select label="Pickup zone" value={zoneId} onChange={setZoneId}
+
+              <Select label={custody === "warehouse" ? "Pickup zone" : "Your area"} value={zoneId} onChange={setZoneId}
                 options={zones.map((z) => ({ value: z.id, label: z.name }))} />
-              <Text label="Pickup address" value={address} onChange={setAddress} placeholder="Building, area" />
+              <Text label={custody === "warehouse" ? "Pickup address" : "Your address"} value={address} onChange={setAddress} placeholder="Building, area" />
 
               {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
@@ -204,7 +233,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
                 {submitting ? "Creating…" : (
                   <>
                     <Check size={16} />
-                    {quote.decision.possession === "warehouse" ? "Confirm & book pickup" : "Confirm listing"}
+                    {custody === "warehouse" ? "Confirm & book pickup" : "Confirm listing"}
                   </>
                 )}
               </button>
@@ -212,7 +241,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
           )}
         </section>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -267,6 +296,94 @@ function QuoteCard({ quote, title }: { quote: Quote; title: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Pick a starting price inside the suggested range; payout updates live. */
+function PricePicker({
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const mid = Math.round((min + max) / 2);
+  const current = num(value) ?? mid;
+  const clamped = Math.min(Math.max(current, min), max);
+  let payout: number | null = null;
+  try {
+    payout = calcCommission(clamped).sellerPayout;
+  } catch {
+    payout = null;
+  }
+  const pct = max > min ? ((clamped - min) / (max - min)) * 100 : 50;
+  const speed = pct <= 33 ? "Sells fastest" : pct <= 66 ? "Balanced" : "Highest return, slower";
+
+  return (
+    <div>
+      <span className="mb-1.5 block text-sm font-medium">Choose your starting price</span>
+      <div className="rounded-2xl border border-border bg-bg p-4">
+        <div className="flex items-baseline justify-between">
+          <div className="text-2xl font-bold">{formatMoney(clamped)}</div>
+          <div className="text-right">
+            <div className="text-sm font-semibold text-brand">
+              {payout != null ? `You get ${formatMoney(payout)}` : "—"}
+            </div>
+            <div className="text-[11px] text-muted">after our commission</div>
+          </div>
+        </div>
+
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={5}
+          value={clamped}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-3 w-full accent-[rgb(var(--brand))]"
+        />
+        <div className="flex justify-between text-[11px] text-muted">
+          <span>{formatMoney(min)}</span>
+          <span className="font-medium text-ink">{speed}</span>
+          <span>{formatMoney(max)}</span>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Our suggested range is based on the item, its condition, and what similar things sell for.
+          You can pick anywhere in it.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CustodyOption({
+  active,
+  onClick,
+  title,
+  body,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl border p-4 text-left transition-colors ${
+        active ? "border-brand bg-brand/5" : "border-border hover:border-ink"
+      }`}
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        {active ? <PackageCheck size={15} className="text-brand" /> : <Home size={15} className="text-muted" />}
+        {title}
+      </div>
+      <p className="mt-1 text-xs text-muted">{body}</p>
+    </button>
   );
 }
 

@@ -568,6 +568,62 @@ export type Database = {
           },
         ]
       }
+      pickup_visits: {
+        Row: {
+          id: string
+          seller_id: string
+          zone_id: string | null
+          address: string
+          scheduled_date: string
+          slot: string
+          notes: string | null
+          status: string
+          agent_id: string | null
+          fee_amount: number
+          fee_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          seller_id: string
+          zone_id?: string | null
+          address: string
+          scheduled_date: string
+          slot: string
+          notes?: string | null
+          status?: string
+          agent_id?: string | null
+          fee_amount?: number
+          fee_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          seller_id?: string
+          zone_id?: string | null
+          address?: string
+          scheduled_date?: string
+          slot?: string
+          notes?: string | null
+          status?: string
+          agent_id?: string | null
+          fee_amount?: number
+          fee_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_visits_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_history: {
         Row: {
           created_at: string
@@ -808,6 +864,20 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
+      book_pickup_visit: {
+        Args: {
+          p_zone_id: string | null
+          p_address: string
+          p_date: string
+          p_slot: string
+          p_notes?: string | null
+        }
+        Returns: string
+      }
+      ops_set_visit_status: {
+        Args: { p_visit_id: string; p_status: string }
+        Returns: undefined
+      }
       request_payout: {
         Args: { p_amount: number; p_method?: string }
         Returns: string
