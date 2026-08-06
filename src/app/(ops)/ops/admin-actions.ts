@@ -45,7 +45,17 @@ export async function setStaffRole(userId: string, role: AppRole, grant: boolean
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_staff_role", { p_user_id: userId, p_role: role, p_grant: grant });
   if (error) return { error: error.message };
-  revalidatePath("/ops/users");
+  revalidatePath("/ops/settings");
+  revalidatePath(`/ops/customers/${userId}`);
+  return {};
+}
+
+export async function grantStaffByEmail(email: string, role: AppRole): Promise<Result> {
+  if (!email.trim()) return { error: "Enter an email." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_grant_staff_by_email", { p_email: email.trim(), p_role: role });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/settings");
   return {};
 }
 

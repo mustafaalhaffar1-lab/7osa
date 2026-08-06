@@ -834,6 +834,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      ops_grant_staff_by_email: {
+        Args: { p_email: string; p_role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
+      ops_get_customer: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          email: string
+          full_name: string | null
+          phone: string | null
+          created_at: string
+          balance: number
+          roles: string[]
+        }[]
+      }
       record_item_save: {
         Args: { p_item_id: string; p_delta: number }
         Returns: undefined

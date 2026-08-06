@@ -8,14 +8,19 @@ export default async function AdminSettingsPage() {
   const supabase = await createClient();
   const me = await getUser();
 
-  const [{ data: settings }, { data: tiers }, { data: zones }, { data: categories }, { data: amAdmin }] =
+  const [{ data: settings }, { data: tiers }, { data: zones }, { data: categories }, { data: amAdmin }, { data: allUsers }] =
     await Promise.all([
       supabase.from("settings").select("key, value"),
       supabase.from("commission_tiers").select("id, min_price, max_price, marketplace_pct, active").order("min_price"),
       supabase.from("zones").select("id, name, emirate, active").order("name"),
       supabase.from("categories").select("id, name, possession_default, active").order("name"),
       me ? supabase.rpc("is_admin", { uid: me.id }) : Promise.resolve({ data: false } as const),
+      supabase.rpc("ops_list_users"),
     ]);
+
+  const staff = ((allUsers as { id: string; email: string; full_name: string | null; roles: string[] }[]) ?? [])
+    .filter((u) => u.roles.length > 0)
+    .map((u) => ({ id: u.id, email: u.email, fullName: u.full_name, roles: u.roles }));
 
   const byKey = new Map((settings ?? []).map((s) => [s.key, s.value]));
   const floor = ((byKey.get("value_floor") ?? {}) as { amount?: number }).amount ?? 500;
@@ -50,6 +55,8 @@ export default async function AdminSettingsPage() {
         }))}
         zones={zones ?? []}
         categories={categories ?? []}
+        staff={staff}
+        myId={me?.id ?? ""}
       />
     </div>
   );

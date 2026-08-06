@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import type { PossessionMode } from "@/lib/domain/item-state";
+import type { AppRole } from "@/lib/domain/enums";
 import {
   updateValueFloor,
   updateMarkdownClock,
@@ -12,11 +13,16 @@ import {
   setZoneActive,
   addCategory,
   setCategoryActive,
+  grantStaffByEmail,
+  setStaffRole,
 } from "../admin-actions";
 
 type Tier = { id: string; minPrice: number; maxPrice: number | null; marketplacePct: number; active: boolean };
 type Zone = { id: string; name: string; emirate: string; active: boolean };
 type Category = { id: string; name: string; possession_default: string; active: boolean };
+type StaffMember = { id: string; email: string; fullName: string | null; roles: string[] };
+
+const STAFF_ROLES: AppRole[] = ["ops_agent", "driver", "admin"];
 
 export function SettingsForms({
   amAdmin,
@@ -25,6 +31,8 @@ export function SettingsForms({
   tiers,
   zones,
   categories,
+  staff,
+  myId,
 }: {
   amAdmin: boolean;
   floor: number;
@@ -32,6 +40,8 @@ export function SettingsForms({
   tiers: Tier[];
   zones: Zone[];
   categories: Category[];
+  staff: StaffMember[];
+  myId: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -49,6 +59,8 @@ export function SettingsForms({
   const [newZone, setNewZone] = useState("");
   const [newCat, setNewCat] = useState("");
   const [newCatMode, setNewCatMode] = useState<PossessionMode>("warehouse");
+  const [staffEmail, setStaffEmail] = useState("");
+  const [staffRole, setStaffRoleSel] = useState<AppRole>("ops_agent");
 
   function run(fn: () => Promise<{ error?: string }>, done: string) {
     setError(null);
@@ -232,6 +244,75 @@ export function SettingsForms({
           </div>
         </Card>
       </div>
+
+      {/* System users & roles */}
+      <Card title="System users & roles" sub="Who can access the operations console. ops_agent & driver operate; admin can also configure and manage roles.">
+        <ul className="space-y-1.5">
+          {staff.length === 0 && <li className="text-sm text-muted">No staff yet.</li>}
+          {staff.map((s) => (
+            <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border px-4 py-2.5 text-sm">
+              <div className="min-w-0">
+                <div className="truncate font-medium">
+                  {s.fullName || s.email} {s.id === myId && <span className="text-xs text-muted">(you)</span>}
+                </div>
+                <div className="truncate text-xs text-muted">{s.email}</div>
+              </div>
+              <div className="flex gap-1.5">
+                {STAFF_ROLES.map((r) => {
+                  const has = s.roles.includes(r);
+                  return (
+                    <button
+                      key={r}
+                      disabled={disabled}
+                      onClick={() =>
+                        run(() => setStaffRole(s.id, r, !has), has ? "Role revoked." : "Role granted.")
+                      }
+                      title={amAdmin ? (has ? `Revoke ${r}` : `Grant ${r}`) : "Admins only"}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        has ? "bg-brand text-brand-fg" : "border border-border text-muted hover:border-brand hover:text-brand"
+                      }`}
+                    >
+                      {r.replace("_", " ")}
+                    </button>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <input
+            value={staffEmail}
+            onChange={(e) => setStaffEmail(e.target.value)}
+            placeholder="Grant staff access by email"
+            disabled={disabled}
+            className="flex-1 basis-52 rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <select
+            value={staffRole}
+            onChange={(e) => setStaffRoleSel(e.target.value as AppRole)}
+            disabled={disabled}
+            className="rounded-xl border border-border bg-bg px-3 py-2 text-sm capitalize outline-none focus:border-brand"
+          >
+            {STAFF_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r.replace("_", " ")}
+              </option>
+            ))}
+          </select>
+          <SaveBtn
+            label="Grant"
+            disabled={disabled || !staffEmail.trim()}
+            onClick={() =>
+              run(async () => {
+                const r = await grantStaffByEmail(staffEmail, staffRole);
+                if (!r.error) setStaffEmail("");
+                return r;
+              }, "Staff access granted.")
+            }
+          />
+        </div>
+      </Card>
     </div>
   );
 }

@@ -9,7 +9,7 @@ const TABS = [
   { href: "/ops/pipeline", label: "Pipeline", icon: Workflow },
   { href: "/ops/products", label: "Products", icon: Package },
   { href: "/ops/orders", label: "Orders", icon: Receipt },
-  { href: "/ops/users", label: "Users", icon: Users },
+  { href: "/ops/customers", label: "Customers", icon: Users },
   { href: "/ops/settings", label: "Settings", icon: Settings },
 ];
 
@@ -20,7 +20,7 @@ export function OpsNav({ orientation = "vertical" }: { orientation?: "vertical" 
     return (
       <nav className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => {
-          const active = pathname === t.href;
+          const active = t.href === "/ops" ? pathname === "/ops" : pathname.startsWith(t.href);
           return (
             <Link
               key={t.href}
