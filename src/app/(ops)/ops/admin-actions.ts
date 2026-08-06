@@ -131,6 +131,51 @@ export async function grantStaffByEmail(email: string, role: AppRole): Promise<R
   return {};
 }
 
+/** Run the markdown clock now. A cron can call the same RPC on a schedule. */
+export async function runMarkdowns(): Promise<{ applied?: number; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("apply_markdowns");
+  if (error) return { error: error.message };
+  revalidatePath("/ops");
+  revalidatePath("/ops/products");
+  return { applied: Array.isArray(data) ? data.length : 0 };
+}
+
+export async function setShelf(itemId: string, shelf: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_set_shelf", { p_item_id: itemId, p_shelf: shelf });
+  if (error) return { error: error.message };
+  revalidatePath(`/ops/products/${itemId}`);
+  return {};
+}
+
+export async function addItemPhoto(itemId: string, url: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("item_photos").insert({ item_id: itemId, url, kind: "professional" });
+  if (error) return { error: error.message };
+  revalidatePath(`/ops/products/${itemId}`);
+  return {};
+}
+
+export async function removeItemPhoto(photoId: string, itemId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("item_photos").delete().eq("id", photoId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ops/products/${itemId}`);
+  return {};
+}
+
+export async function updateSetting(
+  key: string,
+  value: Record<string, string | number | boolean>
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("settings").update({ value }).eq("key", key);
+  if (error) return { error: error.message };
+  revalidatePath("/ops/settings");
+  return {};
+}
+
 export async function updateValueFloor(amount: number): Promise<Result> {
   if (!Number.isFinite(amount) || amount < 0) return { error: "Invalid amount." };
   const supabase = await createClient();

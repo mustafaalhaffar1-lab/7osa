@@ -15,6 +15,7 @@ import {
   setCategoryActive,
   grantStaffByEmail,
   setStaffRole,
+  updateSetting,
 } from "../admin-actions";
 
 type Tier = { id: string; minPrice: number; maxPrice: number | null; marketplacePct: number; active: boolean };
@@ -33,6 +34,11 @@ export function SettingsForms({
   categories,
   staff,
   myId,
+  scope,
+  visitFee,
+  delivery,
+  tax,
+  business,
 }: {
   amAdmin: boolean;
   floor: number;
@@ -42,6 +48,11 @@ export function SettingsForms({
   categories: Category[];
   staff: StaffMember[];
   myId: string;
+  scope: { maxWeightKg: number; maxLongestSideCm: number };
+  visitFee: number;
+  delivery: { amount: number; freeAbove: number };
+  tax: { vatPct: number; pricesIncludeVat: boolean; trn: string };
+  business: { name: string; supportEmail: string; city: string; phone: string };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -61,6 +72,18 @@ export function SettingsForms({
   const [newCatMode, setNewCatMode] = useState<PossessionMode>("warehouse");
   const [staffEmail, setStaffEmail] = useState("");
   const [staffRole, setStaffRoleSel] = useState<AppRole>("ops_agent");
+  const [maxKg, setMaxKg] = useState(String(scope.maxWeightKg));
+  const [maxCm, setMaxCm] = useState(String(scope.maxLongestSideCm));
+  const [fee, setFee] = useState(String(visitFee));
+  const [delAmt, setDelAmt] = useState(String(delivery.amount));
+  const [delFree, setDelFree] = useState(String(delivery.freeAbove));
+  const [vat, setVat] = useState(String(tax.vatPct));
+  const [vatIncl, setVatIncl] = useState(tax.pricesIncludeVat);
+  const [trn, setTrn] = useState(tax.trn);
+  const [bizName, setBizName] = useState(business.name);
+  const [bizEmail, setBizEmail] = useState(business.supportEmail);
+  const [bizCity, setBizCity] = useState(business.city);
+  const [bizPhone, setBizPhone] = useState(business.phone);
 
   function run(fn: () => Promise<{ error?: string }>, done: string) {
     setError(null);
@@ -245,6 +268,146 @@ export function SettingsForms({
         </Card>
       </div>
 
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* What we accept */}
+        <Card title="What we accept" sub="Items bigger or heavier than this are declined at intake. These limits govern the seller wizard live.">
+          <div className="flex flex-wrap items-end gap-2">
+            <Labeled label="Max weight (kg)">
+              <Input value={maxKg} onChange={setMaxKg} disabled={disabled} narrow />
+            </Labeled>
+            <Labeled label="Max longest side (cm)">
+              <Input value={maxCm} onChange={setMaxCm} disabled={disabled} narrow />
+            </Labeled>
+            <SaveBtn
+              disabled={disabled}
+              onClick={() =>
+                run(
+                  () =>
+                    updateSetting("launch_scope", {
+                      max_weight_kg: parseFloat(maxKg),
+                      max_longest_side_cm: parseFloat(maxCm),
+                    }),
+                  "Intake limits updated."
+                )
+              }
+            />
+          </div>
+        </Card>
+
+        {/* Pickup visit fee */}
+        <Card title="Pickup visit fee" sub="Charged when a seller books a home visit — credited back to their wallet on their first sale.">
+          <div className="flex items-center gap-2">
+            <Input value={fee} onChange={setFee} prefix="AED" disabled={disabled} />
+            <SaveBtn
+              disabled={disabled}
+              onClick={() => run(() => updateSetting("visit_fee", { amount: parseFloat(fee) }), "Visit fee updated.")}
+            />
+          </div>
+        </Card>
+
+        {/* Delivery */}
+        <Card title="Delivery" sub="What buyers pay for delivery. Set 0 for free delivery on everything.">
+          <div className="flex flex-wrap items-end gap-2">
+            <Labeled label="Delivery fee">
+              <Input value={delAmt} onChange={setDelAmt} prefix="AED" disabled={disabled} narrow />
+            </Labeled>
+            <Labeled label="Free above">
+              <Input value={delFree} onChange={setDelFree} prefix="AED" disabled={disabled} narrow />
+            </Labeled>
+            <SaveBtn
+              disabled={disabled}
+              onClick={() =>
+                run(
+                  () =>
+                    updateSetting("delivery_fee", {
+                      amount: parseFloat(delAmt),
+                      free_above: parseFloat(delFree),
+                    }),
+                  "Delivery settings updated."
+                )
+              }
+            />
+          </div>
+        </Card>
+
+        {/* Tax */}
+        <Card title="Tax (VAT)" sub="UAE VAT settings used on invoices and receipts.">
+          <div className="flex flex-wrap items-end gap-2">
+            <Labeled label="VAT %">
+              <Input value={vat} onChange={setVat} suffix="%" disabled={disabled} narrow />
+            </Labeled>
+            <Labeled label="TRN">
+              <input
+                value={trn}
+                onChange={(e) => setTrn(e.target.value)}
+                disabled={disabled}
+                placeholder="Tax registration no."
+                className="w-40 rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+            </Labeled>
+            <label className="mb-2 inline-flex items-center gap-2 text-xs text-muted">
+              <input
+                type="checkbox"
+                checked={vatIncl}
+                onChange={(e) => setVatIncl(e.target.checked)}
+                disabled={disabled}
+                className="accent-[rgb(var(--brand))]"
+              />
+              Prices include VAT
+            </label>
+            <SaveBtn
+              disabled={disabled}
+              onClick={() =>
+                run(
+                  () =>
+                    updateSetting("tax", {
+                      vat_pct: parseFloat(vat),
+                      prices_include_vat: vatIncl,
+                      trn,
+                    }),
+                  "Tax settings updated."
+                )
+              }
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* Business details */}
+      <Card title="Business details" sub="Shown to customers in emails, receipts, and support links.">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Labeled label="Business name">
+            <TextInput value={bizName} onChange={setBizName} disabled={disabled} />
+          </Labeled>
+          <Labeled label="Support email">
+            <TextInput value={bizEmail} onChange={setBizEmail} disabled={disabled} />
+          </Labeled>
+          <Labeled label="City">
+            <TextInput value={bizCity} onChange={setBizCity} disabled={disabled} />
+          </Labeled>
+          <Labeled label="Phone">
+            <TextInput value={bizPhone} onChange={setBizPhone} disabled={disabled} />
+          </Labeled>
+        </div>
+        <div className="mt-3">
+          <SaveBtn
+            disabled={disabled}
+            onClick={() =>
+              run(
+                () =>
+                  updateSetting("business", {
+                    name: bizName,
+                    support_email: bizEmail,
+                    city: bizCity,
+                    phone: bizPhone,
+                  }),
+                "Business details updated."
+              )
+            }
+          />
+        </div>
+      </Card>
+
       {/* System users & roles */}
       <Card title="System users & roles" sub="Who can access the operations console. ops_agent & driver operate; admin can also configure and manage roles.">
         <ul className="space-y-1.5">
@@ -363,6 +526,25 @@ function Input({
       />
       {suffix && <span className="text-xs text-muted">{suffix}</span>}
     </span>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-brand disabled:opacity-60"
+    />
   );
 }
 

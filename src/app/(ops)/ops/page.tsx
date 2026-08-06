@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
 import { PayoutQueue, type QueuedPayout } from "./PayoutQueue";
+import { MarkdownRunner } from "./MarkdownRunner";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function OpsDashboard() {
         .from("orders")
         .select("id, sale_price, commission_amount, seller_payout, status, created_at, items(title)")
         .order("created_at", { ascending: false }),
-      supabase.from("items").select("id, status, list_price"),
+      supabase.from("items").select("id, status, list_price, sell_by"),
       supabase.from("wallets").select("balance"),
       supabase.from("payouts").select("amount, status"),
       supabase
@@ -82,6 +83,14 @@ export default async function OpsDashboard() {
         <Kpi icon={<Wallet size={16} />} label="Seller wallet liability" value={formatMoney(walletLiability)} />
         <Kpi icon={<Timer size={16} />} label="Pending payouts" value={formatMoney(pendingPayouts)} />
       </div>
+
+      <MarkdownRunner
+        due={
+          (items ?? []).filter(
+            (i) => i.status === "listed" && i.sell_by != null && new Date(i.sell_by) <= new Date()
+          ).length
+        }
+      />
 
       <PayoutQueue
         payouts={((payoutQueue as { id: string; amount: number; method: string; status: string; created_at: string; profiles: { full_name: string | null } | null }[]) ?? []).map(

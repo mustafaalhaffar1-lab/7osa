@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Check, PackageCheck, Home, Ban } from "lucide-re
 import { CONDITION_GRADES, type ConditionGrade } from "@/lib/domain/enums";
 import type { PossessionMode } from "@/lib/domain/item-state";
 import { estimateValue } from "@/lib/domain/valuation";
-import { assessIntake } from "@/lib/domain/intake";
+import { assessIntake, type IntakeLimits } from "@/lib/domain/intake";
 import { calcCommission } from "@/lib/domain/commission";
 import { formatMoney } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -34,7 +34,15 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function SellWizard({ categories, zones }: { categories: Category[]; zones: Zone[] }) {
+export function SellWizard({
+  categories,
+  zones,
+  limits,
+}: {
+  categories: Category[];
+  zones: Zone[];
+  limits?: IntakeLimits;
+}) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -67,20 +75,27 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
       brand,
       retailPrice: num(retail) ?? undefined,
     });
-    const decision = assessIntake({
-      estimatedValueMin: valuation.estimateMin,
-      estimatedValueMax: valuation.estimateMax,
-      weightKg: num(weight) ?? undefined,
-      longestSideCm: num(side) ?? undefined,
-    });
+    const decision = assessIntake(
+      {
+        estimatedValueMin: valuation.estimateMin,
+        estimatedValueMax: valuation.estimateMax,
+        weightKg: num(weight) ?? undefined,
+        longestSideCm: num(side) ?? undefined,
+      },
+      limits
+    );
     let payoutLow: number | null = null;
     let payoutHigh: number | null = null;
     if (decision.route === "concierge") {
-      payoutLow = calcCommission(valuation.estimateMin).sellerPayout;
-      payoutHigh = calcCommission(valuation.estimateMax).sellerPayout;
+      try {
+        payoutLow = calcCommission(valuation.estimateMin).sellerPayout;
+        payoutHigh = calcCommission(valuation.estimateMax).sellerPayout;
+      } catch {
+        payoutLow = payoutHigh = null;
+      }
     }
     return { valuation, decision, payoutLow, payoutHigh };
-  }, [categoryName, condition, brand, retail, weight, side]);
+  }, [categoryName, condition, brand, retail, weight, side, limits]);
 
   // Seller can override our custody recommendation ("keep it until it sells").
   const custody: PossessionMode = custodyChoice ?? quote.decision.possession ?? "warehouse";

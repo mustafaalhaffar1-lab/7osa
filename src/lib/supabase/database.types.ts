@@ -902,6 +902,20 @@ export type Database = {
         }
         Returns: string
       }
+      apply_markdowns: {
+        Args: Record<string, never>
+        Returns: {
+          item_id: string
+          sku: string | null
+          old_price: number
+          new_price: number
+          hit_floor: boolean
+        }[]
+      }
+      ops_set_shelf: {
+        Args: { p_item_id: string; p_shelf: string }
+        Returns: undefined
+      }
       ops_accept_offer: { Args: { p_offer_id: string }; Returns: string }
       ops_decline_offer: { Args: { p_offer_id: string }; Returns: undefined }
       ops_assign_job: {

@@ -14,15 +14,26 @@ export default async function SellPage() {
   const user = await getUser();
   const supabase = await createClient();
 
-  const [{ data: categories }, { data: zones }, { data: tiers }, { data: floorSetting }] =
+  const [{ data: categories }, { data: zones }, { data: tiers }, { data: settingRows }] =
     await Promise.all([
       supabase.from("categories").select("id, name, possession_default").eq("active", true).order("name"),
       supabase.from("zones").select("id, name").eq("active", true).order("name"),
       supabase.from("commission_tiers").select("min_price, max_price, marketplace_pct").eq("active", true).order("min_price"),
-      supabase.from("settings").select("value").eq("key", "value_floor").maybeSingle(),
+      supabase.from("settings").select("key, value").in("key", ["value_floor", "launch_scope"]),
     ]);
 
-  const floor = (floorSetting?.value as { amount?: number } | null)?.amount ?? 500;
+  const byKey = new Map((settingRows ?? []).map((s) => [s.key, s.value]));
+  const floor = ((byKey.get("value_floor") ?? {}) as { amount?: number }).amount ?? 500;
+  const scope = (byKey.get("launch_scope") ?? {}) as {
+    max_weight_kg?: number;
+    max_longest_side_cm?: number;
+  };
+  // Admin-configured intake limits actually govern the wizard.
+  const limits = {
+    maxWeightKg: scope.max_weight_kg ?? 40,
+    maxLongestSideCm: scope.max_longest_side_cm ?? 180,
+    valueFloor: floor,
+  };
 
   return (
     <div className="min-h-screen bg-bg text-ink">
@@ -37,7 +48,7 @@ export default async function SellPage() {
               <h2 className="text-xl font-semibold tracking-tight">List your item</h2>
               <p className="mt-1 text-sm text-muted">Tell us what it is — you&apos;ll get a quote in seconds.</p>
             </div>
-            <SellWizard categories={categories ?? []} zones={zones ?? []} />
+            <SellWizard categories={categories ?? []} zones={zones ?? []} limits={limits} />
           </div>
         </section>
       ) : (

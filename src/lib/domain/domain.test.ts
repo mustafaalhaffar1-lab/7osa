@@ -6,7 +6,7 @@ import {
   VALUE_FLOOR,
   roundMoney,
 } from "./commission";
-import { assessIntake, defaultPossession } from "./intake";
+import { assessIntake, defaultPossession, DEFAULT_LIMITS } from "./intake";
 import { canTransition, nextStates, isTerminal } from "./item-state";
 
 test("commission: 40% tier splits AED 1500 sofa correctly", () => {
@@ -60,6 +60,22 @@ test("intake: small high-value item -> concierge, warehouse custody", () => {
   });
   assert.equal(d.route, "concierge");
   assert.equal(d.possession, "warehouse");
+});
+
+test("intake: admin-configured limits override the defaults", () => {
+  const item = { estimatedValueMin: 800, estimatedValueMax: 1200, weightKg: 60, longestSideCm: 50 };
+  // 60kg is over the default 40kg ceiling...
+  assert.equal(assessIntake(item).route, "declined");
+  // ...but fine once an admin raises the limit in Settings.
+  assert.equal(
+    assessIntake(item, { ...DEFAULT_LIMITS, maxWeightKg: 80 }).route,
+    "concierge"
+  );
+  // And a raised value floor pushes a mid-value item to self-serve.
+  assert.equal(
+    assessIntake({ estimatedValueMin: 600, estimatedValueMax: 900 }, { ...DEFAULT_LIMITS, valueFloor: 1000 }).route,
+    "self_serve"
+  );
 });
 
 test("intake: bulky-but-eligible item -> concierge, collect-on-sale", () => {

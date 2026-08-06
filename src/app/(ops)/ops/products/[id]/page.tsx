@@ -6,6 +6,7 @@ import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
 import { Gallery } from "@/app/(buyer)/shop/[id]/Gallery";
 import { ProductActions } from "./ProductActions";
+import { PhotoShelfPanel, type ItemPhoto } from "./PhotoShelfPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +26,17 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
   const { data: item } = await supabase
     .from("items")
     .select(
-      "*, categories(name), profiles!items_seller_id_fkey(full_name), item_photos(url, sort), price_history(price, reason, created_at)"
+      "*, categories(name), profiles!items_seller_id_fkey(full_name), item_photos(id, url, sort, kind), price_history(price, reason, created_at)"
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!item) notFound();
 
-  const photos = ((item.item_photos as { url: string; sort: number }[]) ?? [])
-    .sort((a, b) => a.sort - b.sort)
-    .map((p) => p.url);
+  const photoRows = ((item.item_photos as (ItemPhoto & { sort: number })[]) ?? []).sort(
+    (a, b) => a.sort - b.sort
+  );
+  const photos = photoRows.map((p) => p.url);
   const history = ((item.price_history as { price: number; reason: string; created_at: string }[]) ?? [])
     .sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
 
@@ -54,8 +56,13 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* Media */}
-        <div>
+        <div className="space-y-4">
           <Gallery photos={photos} title={item.title as string} />
+          <PhotoShelfPanel
+            itemId={item.id as string}
+            photos={photoRows.map((p) => ({ id: p.id, url: p.url, kind: p.kind }))}
+            shelfCode={(item.shelf_code as string | null) ?? null}
+          />
         </div>
 
         {/* Info */}

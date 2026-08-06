@@ -29,6 +29,19 @@ export default async function AdminSettingsPage() {
     drop_pct?: number;
     interval_days?: number;
   };
+  const scope = (byKey.get("launch_scope") ?? {}) as {
+    max_weight_kg?: number;
+    max_longest_side_cm?: number;
+  };
+  const visitFee = ((byKey.get("visit_fee") ?? {}) as { amount?: number }).amount ?? 50;
+  const delivery = (byKey.get("delivery_fee") ?? {}) as { amount?: number; free_above?: number };
+  const tax = (byKey.get("tax") ?? {}) as { vat_pct?: number; prices_include_vat?: boolean; trn?: string };
+  const business = (byKey.get("business") ?? {}) as {
+    name?: string;
+    support_email?: string;
+    city?: string;
+    phone?: string;
+  };
 
   return (
     <div>
@@ -57,6 +70,23 @@ export default async function AdminSettingsPage() {
         categories={categories ?? []}
         staff={staff}
         myId={me?.id ?? ""}
+        scope={{
+          maxWeightKg: scope.max_weight_kg ?? 40,
+          maxLongestSideCm: scope.max_longest_side_cm ?? 180,
+        }}
+        visitFee={visitFee}
+        delivery={{ amount: delivery.amount ?? 0, freeAbove: delivery.free_above ?? 0 }}
+        tax={{
+          vatPct: tax.vat_pct ?? 5,
+          pricesIncludeVat: tax.prices_include_vat ?? true,
+          trn: tax.trn ?? "",
+        }}
+        business={{
+          name: business.name ?? "Hoosa",
+          supportEmail: business.support_email ?? "",
+          city: business.city ?? "Dubai",
+          phone: business.phone ?? "",
+        }}
       />
     </div>
   );

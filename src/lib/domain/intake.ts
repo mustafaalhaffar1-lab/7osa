@@ -28,6 +28,22 @@ export interface IntakeInput {
   longestSideCm?: number;
 }
 
+/**
+ * Admin-editable limits (Settings → launch scope / value floor). Callers pass what's stored
+ * in the DB; the defaults here are the launch values so the pure logic stays testable.
+ */
+export interface IntakeLimits {
+  maxWeightKg: number;
+  maxLongestSideCm: number;
+  valueFloor: number;
+}
+
+export const DEFAULT_LIMITS: IntakeLimits = {
+  maxWeightKg: MAX_ITEM_WEIGHT_KG,
+  maxLongestSideCm: MAX_ITEM_LONGEST_SIDE_CM,
+  valueFloor: VALUE_FLOOR,
+};
+
 export type IntakeRoute = "concierge" | "self_serve" | "declined";
 
 export interface IntakeDecision {
@@ -44,26 +60,29 @@ export function defaultPossession(input: IntakeInput): PossessionMode {
   return heavy || bulky ? "in_place" : "warehouse";
 }
 
-export function assessIntake(input: IntakeInput): IntakeDecision {
+export function assessIntake(
+  input: IntakeInput,
+  limits: IntakeLimits = DEFAULT_LIMITS
+): IntakeDecision {
   const reasons: string[] = [];
 
-  const tooHeavy = (input.weightKg ?? 0) > MAX_ITEM_WEIGHT_KG;
-  const tooLarge = (input.longestSideCm ?? 0) > MAX_ITEM_LONGEST_SIDE_CM;
-  if (tooHeavy) reasons.push(`Over ${MAX_ITEM_WEIGHT_KG}kg — outside launch logistics.`);
+  const tooHeavy = (input.weightKg ?? 0) > limits.maxWeightKg;
+  const tooLarge = (input.longestSideCm ?? 0) > limits.maxLongestSideCm;
+  if (tooHeavy) reasons.push(`Over ${limits.maxWeightKg}kg — outside launch logistics.`);
   if (tooLarge)
-    reasons.push(`Longer than ${MAX_ITEM_LONGEST_SIDE_CM}cm — outside launch logistics.`);
+    reasons.push(`Longer than ${limits.maxLongestSideCm}cm — outside launch logistics.`);
 
   if (tooHeavy || tooLarge) {
     return { eligible: false, route: "declined", possession: null, reasons };
   }
 
   // Even the best-case estimate must clear the floor to be worth concierge handling.
-  if (input.estimatedValueMax < VALUE_FLOOR) {
+  if (input.estimatedValueMax < limits.valueFloor) {
     return {
       eligible: false,
       route: "self_serve",
       possession: null,
-      reasons: [`Below the AED ${VALUE_FLOOR} concierge value floor.`],
+      reasons: [`Below the AED ${limits.valueFloor} concierge value floor.`],
     };
   }
 
