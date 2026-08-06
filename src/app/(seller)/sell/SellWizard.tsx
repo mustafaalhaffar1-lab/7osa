@@ -47,6 +47,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
   const [weight, setWeight] = useState("");
   const [side, setSide] = useState("");
   const [sellerMin, setSellerMin] = useState("");
+  const [sellerTarget, setSellerTarget] = useState("");
   const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
   const [address, setAddress] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
@@ -113,6 +114,7 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
       confidence: quote.valuation.confidence,
       retailPrice: num(retail),
       sellerMinPrice: num(sellerMin),
+      sellerTargetPrice: num(sellerTarget),
       zoneId: zoneId || null,
       address,
       photoUrls,
@@ -182,8 +184,12 @@ export function SellWizard({ categories, zones }: { categories: Category[]; zone
 
           {quote.decision.route === "concierge" && (
             <div className="space-y-4 rounded-2xl border border-border bg-surface p-6">
-              <Text label="Your minimum price, AED (we never sell below this)" value={sellerMin}
-                onChange={setSellerMin} placeholder={String(quote.valuation.estimateMin)} inputMode="numeric" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Text label="Preferred starting price, AED (optional)" value={sellerTarget}
+                  onChange={setSellerTarget} placeholder={String(quote.valuation.estimateMax)} inputMode="numeric" />
+                <Text label="Your minimum price, AED (we never sell below this)" value={sellerMin}
+                  onChange={setSellerMin} placeholder={String(quote.valuation.estimateMin)} inputMode="numeric" />
+              </div>
               <Select label="Pickup zone" value={zoneId} onChange={setZoneId}
                 options={zones.map((z) => ({ value: z.id, label: z.name }))} />
               <Text label="Pickup address" value={address} onChange={setAddress} placeholder="Building, area" />

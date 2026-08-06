@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { qrSvg, code128Svg } from "@/lib/barcode";
 import { BRAND, SITE_URL } from "@/lib/brand";
-import { formatMoney } from "@/lib/format";
 import { PrintButton } from "./PrintButton";
 
 export const dynamic = "force-dynamic";
@@ -62,9 +61,6 @@ export default async function LabelPage({ params }: { params: Promise<{ id: stri
 
           <div className="mt-3 text-[11px] text-gray-500">
             Price updates automatically — always scan for the current price.
-            {item.list_price != null && (
-              <span className="mt-0.5 block text-gray-400">(listed today at {formatMoney(Number(item.list_price))})</span>
-            )}
           </div>
         </div>
 

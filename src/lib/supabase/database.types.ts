@@ -243,6 +243,7 @@ export type Database = {
           seller_address: string | null
           seller_id: string
           seller_min_price: number | null
+          seller_target_price: number | null
           shelf_code: string | null
           sku: string | null
           status: Database["public"]["Enums"]["item_status"]
@@ -272,6 +273,7 @@ export type Database = {
           seller_address?: string | null
           seller_id: string
           seller_min_price?: number | null
+          seller_target_price?: number | null
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -301,6 +303,7 @@ export type Database = {
           seller_address?: string | null
           seller_id?: string
           seller_min_price?: number | null
+          seller_target_price?: number | null
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -315,6 +318,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -763,6 +773,7 @@ export type Database = {
           p_possession: Database["public"]["Enums"]["possession_mode"]
           p_retail_price: number | null
           p_seller_min_price: number | null
+          p_seller_target_price?: number | null
           p_title: string
           p_weight_kg: number | null
           p_zone_id: string | null

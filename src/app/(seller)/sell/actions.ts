@@ -18,6 +18,7 @@ export interface CreateListingInput {
   confidence: number;
   retailPrice: number | null;
   sellerMinPrice: number | null;
+  sellerTargetPrice: number | null;
   zoneId: string | null;
   address: string;
   photoUrls: string[];
@@ -53,6 +54,7 @@ export async function createListing(input: CreateListingInput): Promise<CreateLi
     p_confidence: input.confidence,
     p_retail_price: input.retailPrice,
     p_seller_min_price: input.sellerMinPrice,
+    p_seller_target_price: input.sellerTargetPrice,
     p_zone_id: input.zoneId,
     p_address: input.address || null,
     p_photo_urls: input.photoUrls.length ? input.photoUrls : null,
