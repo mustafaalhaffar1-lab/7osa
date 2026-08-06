@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { X, ScanLine } from "lucide-react";
 
 /** Turn scanned text (a Hoosa QR URL or a raw SKU) into an in-app path. */
@@ -19,11 +19,29 @@ function toPath(text: string): string {
   return `/shop?q=${encodeURIComponent(t)}`;
 }
 
+/**
+ * Hard navigation on purpose: /p/<sku> resolves server-side with a redirect, and the
+ * client router doesn't reliably follow that chain. A scan is a single intent — one
+ * full navigation is both correct and simpler.
+ */
+function go(path: string) {
+  window.location.assign(path);
+}
+
 export function ScannerModal({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState("Starting camera…");
+  const [manual, setManual] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  function submitManual(e: React.FormEvent) {
+    e.preventDefault();
+    const v = manual.trim();
+    if (v) go(toPath(v));
+  }
 
   useEffect(() => {
     let stop: (() => void) | null = null;
@@ -40,7 +58,7 @@ export function ScannerModal({ onClose }: { onClose: () => void }) {
             if (result && !done) {
               done = true;
               controls.stop();
-              router.push(toPath(result.getText()));
+              go(toPath(result.getText()));
             }
           }
         );
@@ -60,9 +78,13 @@ export function ScannerModal({ onClose }: { onClose: () => void }) {
       done = true;
       stop?.();
     };
-  }, [router]);
+  }, []);
 
-  return (
+  if (!mounted) return null;
+
+  // Rendered at document.body: the header search bar is itself a <form>, and a nested
+  // form would be reparented by the browser (breaking the manual-entry submit).
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex flex-col bg-black">
       <div className="flex items-center justify-between px-4 py-4 text-white">
         <span className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -86,14 +108,34 @@ export function ScannerModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="p-4 text-center">
-        <button
-          onClick={onClose}
-          className="rounded-full bg-white/10 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20"
-        >
-          Cancel
-        </button>
+      {/* Manual fallback — works when the camera is blocked or unavailable */}
+      <div className="space-y-3 p-4">
+        <form onSubmit={submitManual} className="flex items-center gap-2">
+          <input
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            placeholder="Or type the code, e.g. HSA-100001"
+            autoCapitalize="characters"
+            className="flex-1 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/50"
+          />
+          <button
+            type="submit"
+            disabled={!manual.trim()}
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            Go
+          </button>
+        </form>
+        <div className="text-center">
+          <button
+            onClick={onClose}
+            className="rounded-full bg-white/10 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
