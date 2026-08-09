@@ -705,6 +705,13 @@ export type Database = {
           fee_status: string
           created_at: string
           updated_at: string
+          contact_phone: string | null
+          building: string | null
+          unit: string | null
+          area: string | null
+          makani: string | null
+          maps_url: string | null
+          access_notes: string | null
         }
         Insert: {
           id?: string
@@ -720,6 +727,13 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          contact_phone?: string | null
+          building?: string | null
+          unit?: string | null
+          area?: string | null
+          makani?: string | null
+          maps_url?: string | null
+          access_notes?: string | null
         }
         Update: {
           id?: string
@@ -735,6 +749,13 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          contact_phone?: string | null
+          building?: string | null
+          unit?: string | null
+          area?: string | null
+          makani?: string | null
+          maps_url?: string | null
+          access_notes?: string | null
         }
         Relationships: [
           {
@@ -793,6 +814,12 @@ export type Database = {
           id: string
           phone: string | null
           updated_at: string
+          default_building: string | null
+          default_unit: string | null
+          default_area: string | null
+          default_makani: string | null
+          default_maps_url: string | null
+          default_access_notes: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -809,6 +836,12 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+          default_building?: string | null
+          default_unit?: string | null
+          default_area?: string | null
+          default_makani?: string | null
+          default_maps_url?: string | null
+          default_access_notes?: string | null
         }
         Relationships: []
       }

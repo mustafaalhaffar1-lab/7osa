@@ -13,6 +13,7 @@ export async function requestPayout(amount: number): Promise<{ ok: true } | { er
 
   const { error } = await supabase.rpc("request_payout", { p_amount: amount, p_method: "bank" });
   if (error) return { error: error.message };
-  revalidatePath("/wallet");
+  revalidatePath("/account/wallet");
+  revalidatePath("/account");
   return { ok: true };
 }

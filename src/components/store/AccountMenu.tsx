@@ -39,9 +39,11 @@ export function AccountMenu({ signedIn }: { signedIn: boolean }) {
       </button>
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg">
-          <MenuLink href="/my-items" label="My items" onClick={() => setOpen(false)} />
-          <MenuLink href="/wallet" label="Wallet" onClick={() => setOpen(false)} />
-          <MenuLink href="/purchases" label="Purchases" onClick={() => setOpen(false)} />
+          <MenuLink href="/account" label="Your account" onClick={() => setOpen(false)} />
+          <MenuLink href="/account/selling" label="Selling" onClick={() => setOpen(false)} />
+          <MenuLink href="/account/orders" label="Orders" onClick={() => setOpen(false)} />
+          <MenuLink href="/account/wallet" label="Wallet" onClick={() => setOpen(false)} />
+          <MenuLink href="/account/visits" label="Home visits" onClick={() => setOpen(false)} />
           <form action={signOut}>
             <button className="w-full px-4 py-2 text-left text-sm text-muted transition-colors hover:bg-bg hover:text-ink">
               Sign out
