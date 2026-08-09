@@ -158,7 +158,7 @@ function ReceivingRow({ item }: { item: Row }) {
 
   return (
     <li>
-      <Link href={`/ops/products/${item.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-bg">
+      <Link href={`/ops/inventory/products/${item.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-bg">
         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-bg">
           {photo && (
             // eslint-disable-next-line @next/next/no-img-element

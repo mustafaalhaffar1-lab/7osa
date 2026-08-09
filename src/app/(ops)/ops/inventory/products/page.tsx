@@ -14,9 +14,9 @@ export default async function AdminProductsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">Products</h1>
-      <p className="mt-1 text-sm text-muted">
-        Live inventory — reprice, override status, or print a barcode label. Sold items move to Archived.
+      <p className="text-sm text-muted">
+        Scan or search to find an item, then open it to reprice, photograph, shelve or print its
+        label. Sold items move to Archived.
       </p>
       <ProductRows items={(items as unknown as AdminItem[]) ?? []} />
     </div>

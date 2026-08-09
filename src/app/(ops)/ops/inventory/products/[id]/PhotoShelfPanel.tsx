@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Trash2, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { addItemPhoto, removeItemPhoto, setShelf } from "../../admin-actions";
+import { addItemPhoto, removeItemPhoto, setShelf } from "../../../admin-actions";
 
 export type ItemPhoto = { id: string; url: string; kind: string };
 

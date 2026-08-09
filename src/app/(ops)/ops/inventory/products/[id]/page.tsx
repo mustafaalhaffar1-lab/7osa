@@ -50,7 +50,7 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
 
   return (
     <div>
-      <Link href="/ops/products" className="mb-5 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink">
+      <Link href="/ops/inventory/products" className="mb-5 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink">
         <ArrowLeft size={15} /> Products
       </Link>
 

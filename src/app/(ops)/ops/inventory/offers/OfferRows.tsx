@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { acceptOffer, declineOffer } from "../admin-actions";
+import { acceptOffer, declineOffer } from "../../admin-actions";
 
 export type AdminOffer = {
   id: string;

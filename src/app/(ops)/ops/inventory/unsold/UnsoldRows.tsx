@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Undo2, HeartHandshake, Wallet, RefreshCw, Clock } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { resolveUnsold } from "../admin-actions";
+import { resolveUnsold } from "../../admin-actions";
 
 export type StuckItem = {
   id: string;
@@ -81,7 +81,7 @@ function Row({ item, graceDays }: { item: StuckItem; graceDays: number }) {
         </div>
 
         <div className="min-w-0 flex-1 basis-56">
-          <Link href={`/ops/products/${item.id}`} className="truncate text-sm font-medium hover:underline">
+          <Link href={`/ops/inventory/products/${item.id}`} className="truncate text-sm font-medium hover:underline">
             {item.brand ? `${item.brand} · ` : ""}
             {item.title}
           </Link>

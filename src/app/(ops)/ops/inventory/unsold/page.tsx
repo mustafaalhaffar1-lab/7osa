@@ -22,8 +22,7 @@ export default async function UnsoldPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">Needs a decision</h1>
-      <p className="mt-1 text-sm text-muted">
+      <p className="text-sm text-muted">
         These items have dropped as far as the seller allows and stopped selling. Every one of
         them is costing storage — give it back, donate it, buy it outright, or relist it.
       </p>

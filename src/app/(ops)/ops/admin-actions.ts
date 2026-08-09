@@ -13,7 +13,7 @@ export async function setItemPrice(itemId: string, price: number): Promise<Resul
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_price", { p_item_id: itemId, p_price: price });
   if (error) return { error: error.message };
-  revalidatePath("/ops/products");
+  revalidatePath("/ops/inventory/products");
   return {};
 }
 
@@ -21,7 +21,7 @@ export async function overrideItemStatus(itemId: string, to: ItemStatus): Promis
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_status", { p_item_id: itemId, p_to: to });
   if (error) return { error: error.message };
-  revalidatePath("/ops/products");
+  revalidatePath("/ops/inventory/products");
   return {};
 }
 
@@ -97,7 +97,7 @@ export async function acceptOffer(offerId: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_accept_offer", { p_offer_id: offerId });
   if (error) return { error: error.message };
-  revalidatePath("/ops/offers");
+  revalidatePath("/ops/inventory/offers");
   return {};
 }
 
@@ -105,7 +105,7 @@ export async function declineOffer(offerId: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_decline_offer", { p_offer_id: offerId });
   if (error) return { error: error.message };
-  revalidatePath("/ops/offers");
+  revalidatePath("/ops/inventory/offers");
   return {};
 }
 
@@ -160,7 +160,7 @@ export async function runMarkdowns(): Promise<{ applied?: number; error?: string
   const { data, error } = await supabase.rpc("apply_markdowns");
   if (error) return { error: error.message };
   revalidatePath("/ops");
-  revalidatePath("/ops/products");
+  revalidatePath("/ops/inventory/products");
   return { applied: Array.isArray(data) ? data.length : 0 };
 }
 
@@ -195,7 +195,7 @@ export async function resolveUnsold(
     p_amount: amount ?? null,
   });
   if (error) return { error: error.message };
-  revalidatePath("/ops/unsold");
+  revalidatePath("/ops/inventory/unsold");
   revalidatePath("/ops");
   return {};
 }
@@ -204,7 +204,7 @@ export async function setShelf(itemId: string, shelf: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_shelf", { p_item_id: itemId, p_shelf: shelf });
   if (error) return { error: error.message };
-  revalidatePath(`/ops/products/${itemId}`);
+  revalidatePath(`/ops/inventory/products/${itemId}`);
   return {};
 }
 
@@ -212,7 +212,7 @@ export async function addItemPhoto(itemId: string, url: string): Promise<Result>
   const supabase = await createClient();
   const { error } = await supabase.from("item_photos").insert({ item_id: itemId, url, kind: "professional" });
   if (error) return { error: error.message };
-  revalidatePath(`/ops/products/${itemId}`);
+  revalidatePath(`/ops/inventory/products/${itemId}`);
   return {};
 }
 
@@ -220,7 +220,7 @@ export async function removeItemPhoto(photoId: string, itemId: string): Promise<
   const supabase = await createClient();
   const { error } = await supabase.from("item_photos").delete().eq("id", photoId);
   if (error) return { error: error.message };
-  revalidatePath(`/ops/products/${itemId}`);
+  revalidatePath(`/ops/inventory/products/${itemId}`);
   return {};
 }
 

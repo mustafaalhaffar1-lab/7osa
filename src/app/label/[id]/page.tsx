@@ -36,7 +36,7 @@ export default async function LabelPage({ params }: { params: Promise<{ id: stri
       <div className="mx-auto max-w-md">
         {/* Controls — hidden when printing */}
         <div className="mb-5 flex items-center justify-between print:hidden">
-          <Link href="/ops/products" className="inline-flex items-center gap-2 text-sm text-muted hover:text-ink">
+          <Link href="/ops/inventory/products" className="inline-flex items-center gap-2 text-sm text-muted hover:text-ink">
             <ArrowLeft size={15} /> Products
           </Link>
           <PrintButton />

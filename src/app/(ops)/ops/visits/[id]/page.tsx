@@ -147,7 +147,7 @@ export default async function VisitDetailPage({ params }: { params: Promise<{ id
             <ul className="divide-y divide-border">
               {list.map((i) => (
                 <li key={i.id}>
-                  <Link href={`/ops/products/${i.id}`} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-bg">
+                  <Link href={`/ops/inventory/products/${i.id}`} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-bg">
                     <div className="min-w-0">
                       <div className="truncate font-medium">
                         {i.brand ? `${i.brand} · ` : ""}

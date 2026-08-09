@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { ITEM_STATUSES, type ItemStatus } from "@/lib/domain/item-state";
-import { setItemPrice, overrideItemStatus } from "../../admin-actions";
+import { setItemPrice, overrideItemStatus } from "../../../admin-actions";
 
 export function ProductActions({
   itemId,

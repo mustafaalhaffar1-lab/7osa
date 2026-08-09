@@ -12,9 +12,8 @@ export default async function OpsOffersPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">Offers</h1>
-      <p className="mt-1 text-sm text-muted">
-        Accepting an offer sells the item at that price and pays the seller immediately. Offers
+      <p className="text-sm text-muted">
+        Accepting an offer sells the item at that price and starts the seller&apos;s payout. Offers
         below the seller&apos;s minimum are blocked.
       </p>
       <OfferRows offers={(offers as unknown as AdminOffer[]) ?? []} />

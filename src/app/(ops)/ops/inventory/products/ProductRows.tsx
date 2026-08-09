@@ -61,7 +61,7 @@ export function ProductRows({ items }: { items: AdminItem[] }) {
     const exact = items.find((i) => (i.sku ?? "").toLowerCase() === needle);
     if (exact) {
       setQ("");
-      router.push(`/ops/products/${exact.id}`);
+      router.push(`/ops/inventory/products/${exact.id}`);
     }
   }
 
@@ -125,7 +125,7 @@ function Row({ item }: { item: AdminItem }) {
 
   return (
     <li className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-brand/40">
-      <Link href={`/ops/products/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+      <Link href={`/ops/inventory/products/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3">
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-bg">
           {photo && (
             // eslint-disable-next-line @next/next/no-img-element
