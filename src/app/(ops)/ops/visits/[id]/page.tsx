@@ -6,6 +6,7 @@ import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
 import { JourneyTimeline, visitJourney } from "@/components/ops/JourneyTimeline";
 import { CollectPanel } from "./CollectPanel";
+import { CustomerPanel, type PastVisit } from "./CustomerPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -26,14 +27,30 @@ export default async function VisitDetailPage({ params }: { params: Promise<{ id
     .maybeSingle();
   if (!visit) notFound();
 
-  const [{ data: items }, { data: categories }] = await Promise.all([
-    supabase
-      .from("items")
-      .select("id, sku, title, brand, status, list_price, ai_estimate_min, ai_estimate_max, created_at")
-      .eq("visit_id", id)
-      .order("created_at", { ascending: false }),
-    supabase.from("categories").select("id, name").eq("active", true).order("name"),
-  ]);
+  const sellerId = visit.seller_id as string;
+
+  const [{ data: items }, { data: categories }, { data: pastVisits }, { data: customerRows }, { data: sellerItems }, { data: sellerOrders }] =
+    await Promise.all([
+      supabase
+        .from("items")
+        .select("id, sku, title, brand, status, list_price, ai_estimate_min, ai_estimate_max, created_at")
+        .eq("visit_id", id)
+        .order("created_at", { ascending: false }),
+      supabase.from("categories").select("id, name").eq("active", true).order("name"),
+      supabase
+        .from("pickup_visits")
+        .select("id, scheduled_date, slot, status, items_collected, fee_amount, fee_status, report_summary, declined_notes")
+        .eq("seller_id", sellerId)
+        .order("scheduled_date", { ascending: false }),
+      supabase.rpc("ops_get_customer", { p_user_id: sellerId }),
+      supabase.from("items").select("id, status").eq("seller_id", sellerId),
+      supabase.from("orders").select("id").eq("buyer_id", sellerId),
+    ]);
+
+  const c = (customerRows as { id: string; email: string; full_name: string | null; phone: string | null; created_at: string; balance: number }[] | null)?.[0];
+  const sold = (sellerItems ?? []).filter((i) =>
+    ["sold", "in_transit", "delivered", "completed"].includes(i.status as string)
+  ).length;
 
   const list = items ?? [];
   const count = (pred: (s: string) => boolean) => list.filter((i) => pred(i.status as string)).length;
@@ -126,6 +143,26 @@ export default async function VisitDetailPage({ params }: { params: Promise<{ id
             ) : null}
           </div>
         ) : null}
+      </div>
+
+      {/* Who we're visiting, and what happened last time */}
+      <div className="mt-4">
+        <CustomerPanel
+          currentVisitId={id}
+          pastVisits={(pastVisits as PastVisit[]) ?? []}
+          customer={{
+            id: sellerId,
+            name: c?.full_name ?? (visit.profiles as { full_name: string | null } | null)?.full_name ?? null,
+            email: c?.email ?? null,
+            phone: c?.phone ?? (visit.contact_phone as string | null),
+            address: [visit.unit, visit.building, visit.area].filter(Boolean).join(", ") || (visit.address as string),
+            joined: c?.created_at ?? null,
+            walletBalance: Number(c?.balance ?? 0),
+            itemsListed: (sellerItems ?? []).length,
+            itemsSold: sold,
+            ordersPlaced: (sellerOrders ?? []).length,
+          }}
+        />
       </div>
 
       {/* Collected items + add form */}

@@ -186,6 +186,36 @@ export type Database = {
           },
         ]
       }
+      visit_stages: {
+        Row: {
+          id: string
+          name: string
+          sequence: number
+          maps_to_status: string | null
+          is_closed: boolean
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          sequence?: number
+          maps_to_status?: string | null
+          is_closed?: boolean
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          sequence?: number
+          maps_to_status?: string | null
+          is_closed?: boolean
+          active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       carriers: {
         Row: {
           id: string
@@ -705,6 +735,7 @@ export type Database = {
           fee_status: string
           created_at: string
           updated_at: string
+          stage_id: string | null
           report_summary: string | null
           declined_notes: string | null
           report_submitted_at: string | null
@@ -731,6 +762,7 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          stage_id?: string | null
           report_summary?: string | null
           declined_notes?: string | null
           report_submitted_at?: string | null
@@ -757,6 +789,7 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          stage_id?: string | null
           report_summary?: string | null
           declined_notes?: string | null
           report_submitted_at?: string | null
@@ -1074,6 +1107,24 @@ export type Database = {
           p_notes?: string | null
         }
         Returns: string
+      }
+      ops_set_visit_stage: {
+        Args: { p_visit_id: string; p_stage_id: string }
+        Returns: undefined
+      }
+      ops_save_visit_stage: {
+        Args: {
+          p_id: string | null
+          p_name: string
+          p_sequence: number
+          p_maps_to_status?: string | null
+          p_is_closed?: boolean
+        }
+        Returns: string
+      }
+      ops_delete_visit_stage: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       submit_visit_report: {
         Args: { p_visit_id: string; p_summary?: string | null; p_declined?: string | null }
