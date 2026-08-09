@@ -31,7 +31,7 @@ export default async function WalletPage() {
   if (!user) redirect("/login");
 
   const supabase = await createClient();
-  const [{ data: wallet }, { data: txns }, { data: payouts }] = await Promise.all([
+  const [{ data: wallet }, { data: txns }, { data: payouts }, { data: heldOrders }] = await Promise.all([
     supabase.from("wallets").select("balance, currency").eq("user_id", user.id).maybeSingle(),
     supabase
       .from("wallet_transactions")
@@ -39,7 +39,19 @@ export default async function WalletPage() {
       .order("created_at", { ascending: false })
       .limit(50),
     supabase.from("payouts").select("id, amount, method, status, created_at").order("created_at", { ascending: false }),
+    // Sales that are sold but still inside the buyer's return window.
+    supabase
+      .from("orders")
+      .select("id, seller_payout, payout_release_at, items!inner(title, seller_id)")
+      .eq("payout_status", "held")
+      .eq("items.seller_id", user.id),
   ]);
+
+  const pending = (heldOrders ?? []).reduce((s, o) => s + Number(o.seller_payout), 0);
+  const nextRelease = (heldOrders ?? [])
+    .map((o) => o.payout_release_at)
+    .filter(Boolean)
+    .sort()[0] as string | undefined;
 
   const balance = Number(wallet?.balance ?? 0);
   const earned = (txns ?? [])
@@ -60,6 +72,17 @@ export default async function WalletPage() {
             </div>
             <div className="text-4xl font-bold tracking-tight">{formatMoney(balance)}</div>
             <div className="mt-1 text-sm opacity-80">{formatMoney(earned)} earned all-time</div>
+            {pending > 0 && (
+              <div className="mt-3 rounded-xl bg-brand-fg/10 px-3 py-2 text-sm">
+                <span className="font-semibold">{formatMoney(pending)} on the way</span>
+                <span className="block text-xs opacity-80">
+                  Clears once the buyer&apos;s return window closes
+                  {nextRelease
+                    ? ` — from ${new Date(nextRelease).toLocaleDateString(BRAND.locale, { day: "numeric", month: "short" })}`
+                    : ""}
+                </span>
+              </div>
+            )}
           </div>
           <CashOut balance={balance} />
         </div>

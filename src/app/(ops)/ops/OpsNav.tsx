@@ -13,6 +13,7 @@ import {
   HandCoins,
   Truck,
   AlertCircle,
+  Undo2,
 } from "lucide-react";
 
 const TABS = [
@@ -24,6 +25,7 @@ const TABS = [
   { href: "/ops/unsold", label: "Unsold", icon: AlertCircle },
   { href: "/ops/offers", label: "Offers", icon: HandCoins },
   { href: "/ops/orders", label: "Orders", icon: Receipt },
+  { href: "/ops/returns", label: "Returns", icon: Undo2 },
   { href: "/ops/customers", label: "Customers", icon: Users },
   { href: "/ops/settings", label: "Settings", icon: Settings },
 ];

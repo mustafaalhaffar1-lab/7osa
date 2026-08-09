@@ -186,6 +186,56 @@ export type Database = {
           },
         ]
       }
+      returns: {
+        Row: {
+          id: string
+          order_id: string
+          buyer_id: string
+          reason: string
+          description: string | null
+          photo_urls: string[] | null
+          status: string
+          refund_amount: number | null
+          resolution_note: string | null
+          created_at: string
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          buyer_id: string
+          reason: string
+          description?: string | null
+          photo_urls?: string[] | null
+          status?: string
+          refund_amount?: number | null
+          resolution_note?: string | null
+          created_at?: string
+          resolved_at?: string | null
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          buyer_id?: string
+          reason?: string
+          description?: string | null
+          photo_urls?: string[] | null
+          status?: string
+          refund_amount?: number | null
+          resolution_note?: string | null
+          created_at?: string
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_photos: {
         Row: {
           created_at: string
@@ -502,6 +552,10 @@ export type Database = {
           seller_payout: number
           status: Database["public"]["Enums"]["order_status"]
           updated_at: string
+          fulfilment: string
+          delivered_at: string | null
+          payout_status: string
+          payout_release_at: string | null
         }
         Insert: {
           buyer_id: string
@@ -534,6 +588,10 @@ export type Database = {
           seller_payout?: number
           status?: Database["public"]["Enums"]["order_status"]
           updated_at?: string
+          fulfilment?: string
+          delivered_at?: string | null
+          payout_status?: string
+          payout_release_at?: string | null
         }
         Relationships: [
           {
@@ -925,6 +983,25 @@ export type Database = {
         Args: { p_item_id: string; p_shelf: string }
         Returns: undefined
       }
+      request_return: {
+        Args: {
+          p_order_id: string
+          p_reason: string
+          p_description?: string | null
+          p_photos?: string[] | null
+        }
+        Returns: string
+      }
+      ops_resolve_return: {
+        Args: {
+          p_return_id: string
+          p_approve: boolean
+          p_refund?: number | null
+          p_note?: string | null
+        }
+        Returns: undefined
+      }
+      release_due_payouts: { Args: Record<string, never>; Returns: number }
       ops_resolve_unsold: {
         Args: { p_item_id: string; p_action: string; p_amount?: number | null }
         Returns: undefined

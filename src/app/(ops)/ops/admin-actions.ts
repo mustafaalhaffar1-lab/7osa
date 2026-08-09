@@ -141,6 +141,25 @@ export async function runMarkdowns(): Promise<{ applied?: number; error?: string
   return { applied: Array.isArray(data) ? data.length : 0 };
 }
 
+export async function resolveReturn(
+  returnId: string,
+  approve: boolean,
+  refund: number | null,
+  note: string
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_resolve_return", {
+    p_return_id: returnId,
+    p_approve: approve,
+    p_refund: refund,
+    p_note: note || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/returns");
+  revalidatePath("/ops");
+  return {};
+}
+
 export async function resolveUnsold(
   itemId: string,
   action: "return" | "donate" | "buyout" | "relist",
