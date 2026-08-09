@@ -9,6 +9,13 @@ export async function bookVisit(input: {
   date: string;
   slot: "morning" | "afternoon" | "evening";
   notes: string;
+  phone: string;
+  building?: string;
+  unit?: string;
+  area?: string;
+  makani?: string;
+  mapsUrl?: string;
+  accessNotes?: string;
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -22,10 +29,18 @@ export async function bookVisit(input: {
     p_date: input.date,
     p_slot: input.slot,
     p_notes: input.notes || null,
+    p_phone: input.phone,
+    p_building: input.building || null,
+    p_unit: input.unit || null,
+    p_area: input.area || null,
+    p_makani: input.makani || null,
+    p_maps_url: input.mapsUrl || null,
+    p_access_notes: input.accessNotes || null,
   });
   if (error) return { error: error.message };
 
   revalidatePath("/sell/visit");
   revalidatePath("/my-items");
+  revalidatePath("/ops/logistics");
   return { ok: true };
 }

@@ -29,7 +29,21 @@ function upcomingDates(): { value: string; label: string }[] {
   return out;
 }
 
-export function VisitForm({ zones }: { zones: Zone[] }) {
+export function VisitForm({
+  zones,
+  defaults,
+}: {
+  zones: Zone[];
+  defaults?: {
+    phone?: string | null;
+    building?: string | null;
+    unit?: string | null;
+    area?: string | null;
+    makani?: string | null;
+    mapsUrl?: string | null;
+    accessNotes?: string | null;
+  };
+}) {
   const router = useRouter();
   const dates = upcomingDates();
   const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
@@ -37,6 +51,14 @@ export function VisitForm({ zones }: { zones: Zone[] }) {
   const [date, setDate] = useState(dates[0]?.value ?? "");
   const [slot, setSlot] = useState<Slot>("morning");
   const [notes, setNotes] = useState("");
+  // Logistics detail — this is what makes the difference between finding you and not.
+  const [phone, setPhone] = useState(defaults?.phone ?? "");
+  const [building, setBuilding] = useState(defaults?.building ?? "");
+  const [unit, setUnit] = useState(defaults?.unit ?? "");
+  const [area, setArea] = useState(defaults?.area ?? "");
+  const [makani, setMakani] = useState(defaults?.makani ?? "");
+  const [mapsUrl, setMapsUrl] = useState(defaults?.mapsUrl ?? "");
+  const [accessNotes, setAccessNotes] = useState(defaults?.accessNotes ?? "");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -44,11 +66,23 @@ export function VisitForm({ zones }: { zones: Zone[] }) {
   function submit() {
     setError(null);
     start(async () => {
-      const res = await bookVisit({ zoneId: zoneId || null, address, date, slot, notes });
+      const res = await bookVisit({
+        zoneId: zoneId || null,
+        address,
+        date,
+        slot,
+        notes,
+        phone,
+        building,
+        unit,
+        area,
+        makani,
+        mapsUrl,
+        accessNotes,
+      });
       if ("error" in res) setError(res.error);
       else {
         setDone(true);
-        setAddress("");
         setNotes("");
         router.refresh();
       }
@@ -91,11 +125,83 @@ export function VisitForm({ zones }: { zones: Zone[] }) {
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Address</span>
+        <span className="mb-1.5 block text-sm font-medium">
+          Mobile number <span className="text-brand">*</span>
+        </span>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          type="tel"
+          inputMode="tel"
+          placeholder="05X XXX XXXX"
+          className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+        />
+        <span className="mt-1 block text-xs text-muted">
+          Our agent calls before arriving — we can&apos;t come without it.
+        </span>
+      </label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Building / villa</span>
+          <input
+            value={building}
+            onChange={(e) => setBuilding(e.target.value)}
+            placeholder="e.g. Marina Gate 2"
+            className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Apartment / villa no.</span>
+          <input
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="e.g. 1804"
+            className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+          />
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Street / landmark</span>
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Building, apartment, street"
+          placeholder="Street name or nearest landmark"
+          className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+        />
+      </label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Makani number (optional)</span>
+          <input
+            value={makani}
+            onChange={(e) => setMakani(e.target.value)}
+            inputMode="numeric"
+            placeholder="10 digits"
+            className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+          />
+          <span className="mt-1 block text-xs text-muted">On your building entrance plate.</span>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Google Maps pin (optional)</span>
+          <input
+            value={mapsUrl}
+            onChange={(e) => setMapsUrl(e.target.value)}
+            placeholder="Paste a maps link"
+            className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
+          />
+          <span className="mt-1 block text-xs text-muted">The fastest way to find you.</span>
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Parking &amp; access (optional)</span>
+        <input
+          value={accessNotes}
+          onChange={(e) => setAccessNotes(e.target.value)}
+          placeholder="e.g. Visitor parking P2, use service lift, security needs ID"
           className="w-full rounded-xl border border-border bg-bg px-4 py-2.5 text-sm outline-none focus:border-brand"
         />
       </label>

@@ -186,6 +186,36 @@ export type Database = {
           },
         ]
       }
+      carriers: {
+        Row: {
+          id: string
+          name: string
+          kind: string
+          contact_phone: string | null
+          tracking_url: string | null
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          kind?: string
+          contact_phone?: string | null
+          tracking_url?: string | null
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          kind?: string
+          contact_phone?: string | null
+          tracking_url?: string | null
+          active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       returns: {
         Row: {
           id: string
@@ -413,6 +443,28 @@ export type Database = {
           type: Database["public"]["Enums"]["logistics_job_type"]
           updated_at: string
           zone_id: string | null
+          visit_id: string | null
+          carrier_id: string | null
+          tracking_ref: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          alt_phone: string | null
+          building: string | null
+          unit: string | null
+          area: string | null
+          makani: string | null
+          maps_url: string | null
+          access_notes: string | null
+          scheduled_date: string | null
+          slot: string | null
+          sequence: number | null
+          arrived_at: string | null
+          completed_at: string | null
+          proof_photo_url: string | null
+          completion_notes: string | null
+          failure_reason: string | null
+          attempt_count: number
+          needs_two_people: boolean
         }
         Insert: {
           address?: string | null
@@ -948,6 +1000,13 @@ export type Database = {
           p_date: string
           p_slot: string
           p_notes?: string | null
+          p_phone?: string | null
+          p_building?: string | null
+          p_unit?: string | null
+          p_area?: string | null
+          p_makani?: string | null
+          p_maps_url?: string | null
+          p_access_notes?: string | null
         }
         Returns: string
       }
@@ -1021,6 +1080,29 @@ export type Database = {
       }
       ops_accept_offer: { Args: { p_offer_id: string }; Returns: string }
       ops_decline_offer: { Args: { p_offer_id: string }; Returns: undefined }
+      ops_dispatch_job: {
+        Args: {
+          p_job_id: string
+          p_driver_id?: string | null
+          p_carrier_id?: string | null
+          p_tracking_ref?: string | null
+        }
+        Returns: undefined
+      }
+      ops_schedule_job: {
+        Args: { p_job_id: string; p_date: string; p_slot?: string | null; p_sequence?: number | null }
+        Returns: undefined
+      }
+      advance_job: {
+        Args: {
+          p_job_id: string
+          p_status: Database["public"]["Enums"]["logistics_job_status"]
+          p_notes?: string | null
+          p_proof_url?: string | null
+          p_failure_reason?: string | null
+        }
+        Returns: undefined
+      }
       ops_assign_job: {
         Args: { p_job_id: string; p_driver_id: string }
         Returns: undefined
@@ -1116,9 +1198,16 @@ export type Database = {
         | "unassigned"
         | "assigned"
         | "en_route"
+        | "arrived"
         | "completed"
         | "failed"
-      logistics_job_type: "pickup_intake" | "pickup_on_sale" | "delivery"
+      logistics_job_type:
+        | "pickup_intake"
+        | "pickup_on_sale"
+        | "delivery"
+        | "visit"
+        | "return_pickup"
+        | "return_to_seller"
       offer_status:
         | "pending"
         | "accepted"

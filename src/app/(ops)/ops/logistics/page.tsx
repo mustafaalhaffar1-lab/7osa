@@ -1,33 +1,50 @@
 import { createClient } from "@/lib/supabase/server";
-import { JobRows, type AdminJob, type DriverOption } from "./JobRows";
+import { isoDate } from "@/lib/logistics";
+import { DispatchBoard, type DispatchJob, type Assignee } from "./DispatchBoard";
 
 export const dynamic = "force-dynamic";
 
-export default async function OpsLogisticsPage() {
+export default async function LogisticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string; zone?: string }>;
+}) {
+  const sp = await searchParams;
+  const date = sp.date || isoDate(new Date());
   const supabase = await createClient();
 
-  const [{ data: jobs }, { data: users }] = await Promise.all([
+  const [{ data: jobs }, { data: users }, { data: carriers }, { data: zones }] = await Promise.all([
     supabase
       .from("logistics_jobs")
-      .select("id, type, status, address, scheduled_from, scheduled_to, driver_id, created_at, items(title, sku, seller_address), zones(name)")
-      .order("created_at", { ascending: false }),
+      .select(
+        "id, type, status, scheduled_date, slot, sequence, driver_id, carrier_id, tracking_ref, contact_name, contact_phone, alt_phone, address, building, unit, area, makani, maps_url, access_notes, notes, needs_two_people, attempt_count, failure_reason, completion_notes, zone_id, items(title, sku), zones(name)"
+      )
+      .eq("scheduled_date", date)
+      .order("sequence", { nullsFirst: false }),
     supabase.rpc("ops_list_users"),
+    supabase.from("carriers").select("id, name, kind, tracking_url").eq("active", true).order("kind"),
+    supabase.from("zones").select("id, name").eq("active", true).order("name"),
   ]);
 
-  const drivers: DriverOption[] = (
+  // Anyone with a staff role can be sent on a job — most teams are small at the start.
+  const drivers: Assignee[] = (
     (users as { id: string; full_name: string | null; email: string; roles: string[] }[]) ?? []
   )
-    .filter((u) => u.roles.includes("driver") || u.roles.includes("ops_agent") || u.roles.includes("admin"))
-    .map((u) => ({ id: u.id, name: u.full_name || u.email }));
+    .filter((u) => u.roles.length > 0)
+    .map((u) => ({ id: u.id, name: u.full_name || u.email, kind: "driver" as const }));
+
+  const carrierList: Assignee[] = ((carriers as { id: string; name: string; kind: string }[]) ?? [])
+    .filter((c) => c.kind !== "in_house")
+    .map((c) => ({ id: c.id, name: c.name, kind: "carrier" as const }));
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight">Logistics</h1>
-      <p className="mt-1 text-sm text-muted">
-        Every pickup and delivery. Assign a driver, then move the job along — completing a job
-        updates the item automatically.
-      </p>
-      <JobRows jobs={(jobs as unknown as AdminJob[]) ?? []} drivers={drivers} />
-    </div>
+    <DispatchBoard
+      date={date}
+      jobs={(jobs as unknown as DispatchJob[]) ?? []}
+      drivers={drivers}
+      carriers={carrierList}
+      zones={zones ?? []}
+      zoneFilter={sp.zone ?? ""}
+    />
   );
 }
