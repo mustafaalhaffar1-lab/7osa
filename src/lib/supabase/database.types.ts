@@ -705,6 +705,10 @@ export type Database = {
           fee_status: string
           created_at: string
           updated_at: string
+          report_summary: string | null
+          declined_notes: string | null
+          report_submitted_at: string | null
+          items_collected: number
           contact_phone: string | null
           building: string | null
           unit: string | null
@@ -727,6 +731,10 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          report_summary?: string | null
+          declined_notes?: string | null
+          report_submitted_at?: string | null
+          items_collected?: number
           contact_phone?: string | null
           building?: string | null
           unit?: string | null
@@ -749,6 +757,10 @@ export type Database = {
           fee_status?: string
           created_at?: string
           updated_at?: string
+          report_summary?: string | null
+          declined_notes?: string | null
+          report_submitted_at?: string | null
+          items_collected?: number
           contact_phone?: string | null
           building?: string | null
           unit?: string | null
@@ -1058,8 +1070,14 @@ export type Database = {
           p_estimate_max: number
           p_seller_min_price?: number | null
           p_retail_price?: number | null
+          p_photo_urls?: string[] | null
+          p_notes?: string | null
         }
         Returns: string
+      }
+      submit_visit_report: {
+        Args: { p_visit_id: string; p_summary?: string | null; p_declined?: string | null }
+        Returns: undefined
       }
       apply_markdowns: {
         Args: Record<string, never>

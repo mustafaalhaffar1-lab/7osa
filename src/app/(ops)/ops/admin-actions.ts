@@ -51,6 +51,8 @@ export async function addItemFromVisit(input: {
   estimateMax: number;
   sellerMinPrice: number | null;
   retailPrice: number | null;
+  photoUrls?: string[];
+  notes?: string;
 }): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_add_item_from_visit", {
@@ -63,10 +65,31 @@ export async function addItemFromVisit(input: {
     p_estimate_max: input.estimateMax,
     p_seller_min_price: input.sellerMinPrice,
     p_retail_price: input.retailPrice,
+    p_photo_urls: input.photoUrls?.length ? input.photoUrls : null,
+    p_notes: input.notes || null,
   });
   if (error) return { error: error.message };
   revalidatePath(`/ops/visits/${input.visitId}`);
-  revalidatePath("/ops/pipeline");
+  revalidatePath("/ops/receiving");
+  return {};
+}
+
+export async function submitVisitReport(
+  visitId: string,
+  summary: string,
+  declined: string
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("submit_visit_report", {
+    p_visit_id: visitId,
+    p_summary: summary || null,
+    p_declined: declined || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/ops/visits/${visitId}`);
+  revalidatePath("/ops/visits");
+  revalidatePath("/ops/receiving");
+  revalidatePath("/ops/logistics");
   return {};
 }
 

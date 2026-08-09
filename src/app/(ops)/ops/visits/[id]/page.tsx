@@ -102,6 +102,30 @@ export default async function VisitDetailPage({ params }: { params: Promise<{ id
         <div className="mt-6 border-t border-border pt-5">
           <JourneyTimeline steps={journey} />
         </div>
+
+        {/* The agent's report, once submitted */}
+        {visit.report_submitted_at ? (
+          <div className="mt-5 rounded-2xl border border-border bg-bg p-4">
+            <h2 className="text-sm font-semibold">Agent&apos;s report</h2>
+            <p className="mt-1 text-xs text-muted">
+              Submitted{" "}
+              {new Date(visit.report_submitted_at as string).toLocaleString(BRAND.locale, {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+            {visit.report_summary ? (
+              <p className="mt-2 text-sm">{visit.report_summary as string}</p>
+            ) : null}
+            {visit.declined_notes ? (
+              <p className="mt-1.5 text-sm text-muted">
+                <span className="font-medium text-ink">Not taken:</span> {visit.declined_notes as string}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Collected items + add form */}
@@ -144,7 +168,12 @@ export default async function VisitDetailPage({ params }: { params: Promise<{ id
           )}
         </section>
 
-        <CollectPanel visitId={id} categories={categories ?? []} />
+        <CollectPanel
+          visitId={id}
+          categories={categories ?? []}
+          collectedCount={list.length}
+          submitted={Boolean(visit.report_submitted_at)}
+        />
       </div>
     </div>
   );

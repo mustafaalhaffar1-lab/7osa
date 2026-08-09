@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -13,6 +14,7 @@ import {
   KeyRound,
   PackageX,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import {
   JOB_TYPE,
@@ -37,6 +39,7 @@ export type DispatchJob = {
   sequence: number | null;
   driver_id: string | null;
   carrier_id: string | null;
+  visit_id: string | null;
   tracking_ref: string | null;
   contact_name: string | null;
   contact_phone: string | null;
@@ -64,14 +67,20 @@ const OPEN_STAGES: JobStage[] = ["unassigned", "assigned", "en_route", "arrived"
 
 export function DispatchBoard({
   date,
+  lane,
   jobs,
+  visitCount,
+  transportCount,
   drivers,
   carriers,
   zones,
   zoneFilter,
 }: {
   date: string;
+  lane: "visits" | "transport";
   jobs: DispatchJob[];
+  visitCount: number;
+  transportCount: number;
   drivers: Assignee[];
   carriers: Assignee[];
   zones: { id: string; name: string }[];
@@ -79,10 +88,20 @@ export function DispatchBoard({
 }) {
   const router = useRouter();
 
+  const qs = (over: Partial<{ date: string; zone: string; lane: string }> = {}) => {
+    const p = new URLSearchParams();
+    p.set("date", over.date ?? date);
+    const z = over.zone ?? zoneFilter;
+    if (z) p.set("zone", z);
+    const l = over.lane ?? lane;
+    if (l === "visits") p.set("lane", "visits");
+    return `/ops/logistics?${p.toString()}`;
+  };
+
   function goDate(offsetDays: number) {
     const d = new Date(date + "T12:00:00");
     d.setDate(d.getDate() + offsetDays);
-    router.push(`/ops/logistics?date=${isoDate(d)}${zoneFilter ? `&zone=${zoneFilter}` : ""}`);
+    router.push(qs({ date: isoDate(d) }));
   }
 
   const visible = zoneFilter ? jobs.filter((j) => j.zone_id === zoneFilter) : jobs;
@@ -113,7 +132,9 @@ export function DispatchBoard({
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Dispatch</h1>
           <p className="mt-0.5 text-sm text-muted">
-            Everything happening on one day — visits, pickups, deliveries and returns.
+            {lane === "visits"
+              ? "Paid home visits — an agent values items on the spot and brings back what the seller agrees to sell."
+              : "Moving goods — collections from sellers, deliveries to buyers, and returns."}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -129,7 +150,7 @@ export function DispatchBoard({
           </button>
           {!isToday && (
             <button
-              onClick={() => router.push(`/ops/logistics?date=${isoDate(new Date())}`)}
+              onClick={() => router.push(qs({ date: isoDate(new Date()) }))}
               className="rounded-full border border-border px-3 py-2 text-xs font-medium text-muted transition-colors hover:text-ink"
             >
               Today
@@ -138,8 +159,28 @@ export function DispatchBoard({
         </div>
       </div>
 
+      {/* Lanes — visits are planned separately from goods movement */}
+      <div className="mt-4 inline-flex rounded-full border border-border bg-surface p-1">
+        <button
+          onClick={() => router.push(qs({ lane: "transport" }))}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            lane === "transport" ? "bg-brand text-brand-fg" : "text-muted hover:text-ink"
+          }`}
+        >
+          Pickups &amp; deliveries ({transportCount})
+        </button>
+        <button
+          onClick={() => router.push(qs({ lane: "visits" }))}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            lane === "visits" ? "bg-brand text-brand-fg" : "text-muted hover:text-ink"
+          }`}
+        >
+          Paid visits ({visitCount})
+        </button>
+      </div>
+
       {/* Day summary */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
         <Stat label="Jobs today" value={visible.length} />
         <Stat label="Unassigned" value={unassigned.length} tone={unassigned.length > 0 ? "warn" : undefined} />
         <Stat label="In progress" value={open.filter((j) => j.status === "en_route" || j.status === "arrived").length} />
@@ -149,9 +190,7 @@ export function DispatchBoard({
         )}
         <select
           value={zoneFilter}
-          onChange={(e) =>
-            router.push(`/ops/logistics?date=${date}${e.target.value ? `&zone=${e.target.value}` : ""}`)
-          }
+          onChange={(e) => router.push(qs({ zone: e.target.value }))}
           className="ml-auto rounded-full border border-border bg-surface px-3 py-1.5 outline-none focus:border-brand"
         >
           <option value="">All zones</option>
@@ -454,6 +493,14 @@ function JobCard({
             >
               {pending ? "…" : next.label}
             </button>
+          )}
+          {job.visit_id && (
+            <Link
+              href={`/ops/visits/${job.visit_id}`}
+              className="inline-flex items-center gap-1 rounded-full border border-brand px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/10"
+            >
+              <ClipboardList size={10} /> Collection sheet
+            </Link>
           )}
           <button
             disabled={pending}

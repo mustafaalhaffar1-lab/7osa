@@ -14,13 +14,15 @@ import {
   Truck,
   AlertCircle,
   Undo2,
+  PackageCheck,
 } from "lucide-react";
 
 const TABS = [
   { href: "/ops", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ops/visits", label: "Visits", icon: CalendarCheck },
+  { href: "/ops/logistics", label: "Dispatch", icon: Truck },
+  { href: "/ops/receiving", label: "Receiving", icon: PackageCheck },
   { href: "/ops/pipeline", label: "Pipeline", icon: Workflow },
-  { href: "/ops/logistics", label: "Logistics", icon: Truck },
   { href: "/ops/products", label: "Products", icon: Package },
   { href: "/ops/unsold", label: "Unsold", icon: AlertCircle },
   { href: "/ops/offers", label: "Offers", icon: HandCoins },
