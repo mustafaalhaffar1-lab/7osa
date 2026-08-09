@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
 import type { ItemStatus } from "@/lib/domain/item-state";
+import { ItemControls } from "./ItemControls";
 
 export const metadata = { title: `My items - ${BRAND.name}` };
 
@@ -32,7 +33,7 @@ export default async function MyItemsPage() {
   const supabase = await createClient();
   const { data: items } = await supabase
     .from("items")
-    .select("id, title, status, possession, ai_estimate_min, ai_estimate_max, list_price, item_photos(url)")
+    .select("id, title, status, possession, ai_estimate_min, ai_estimate_max, list_price, seller_min_price, auto_accept_above, end_of_life_pref, company_owned, item_photos(url)")
     .order("created_at", { ascending: false });
 
   return (
@@ -56,26 +57,40 @@ export default async function MyItemsPage() {
             {items.map((it) => {
               const photo = (it.item_photos as { url: string }[] | null)?.[0]?.url;
               return (
-                <li key={it.id} className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4">
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-bg">
-                    {photo && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo} alt="" className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{it.title}</div>
-                    <div className="text-sm text-muted">
-                      {it.ai_estimate_min != null && it.ai_estimate_max != null
-                        ? `Est. ${formatMoney(it.ai_estimate_min)} – ${formatMoney(it.ai_estimate_max)}`
-                        : "Estimate pending"}
-                      {" · "}
-                      {it.possession === "warehouse" ? "We collect" : "Stays home"}
+                <li key={it.id} className="rounded-2xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-bg">
+                      {photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={photo} alt="" className="h-full w-full object-cover" />
+                      )}
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{it.title}</div>
+                      <div className="text-sm text-muted">
+                        {it.list_price != null
+                          ? `Listed at ${formatMoney(it.list_price)}`
+                          : it.ai_estimate_min != null && it.ai_estimate_max != null
+                            ? `Est. ${formatMoney(it.ai_estimate_min)} – ${formatMoney(it.ai_estimate_max)}`
+                            : "Estimate pending"}
+                        {" · "}
+                        {it.possession === "warehouse" ? "We collect" : "Stays home"}
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
+                      {STATUS_LABEL[it.status as ItemStatus] ?? it.status}
+                    </span>
                   </div>
-                  <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
-                    {STATUS_LABEL[it.status as ItemStatus] ?? it.status}
-                  </span>
+                  <div className="mt-3 border-t border-border pt-3">
+                    <ItemControls
+                      itemId={it.id}
+                      status={it.status as string}
+                      minPrice={it.seller_min_price != null ? Number(it.seller_min_price) : null}
+                      autoAccept={it.auto_accept_above != null ? Number(it.auto_accept_above) : null}
+                      pref={(it.end_of_life_pref as string) ?? "keep"}
+                      companyOwned={Boolean(it.company_owned)}
+                    />
+                  </div>
                 </li>
               );
             })}

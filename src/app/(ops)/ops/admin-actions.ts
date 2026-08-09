@@ -141,6 +141,23 @@ export async function runMarkdowns(): Promise<{ applied?: number; error?: string
   return { applied: Array.isArray(data) ? data.length : 0 };
 }
 
+export async function resolveUnsold(
+  itemId: string,
+  action: "return" | "donate" | "buyout" | "relist",
+  amount?: number
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ops_resolve_unsold", {
+    p_item_id: itemId,
+    p_action: action,
+    p_amount: amount ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/ops/unsold");
+  revalidatePath("/ops");
+  return {};
+}
+
 export async function setShelf(itemId: string, shelf: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("ops_set_shelf", { p_item_id: itemId, p_shelf: shelf });

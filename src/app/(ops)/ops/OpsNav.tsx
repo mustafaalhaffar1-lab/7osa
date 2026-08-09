@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   HandCoins,
   Truck,
+  AlertCircle,
 } from "lucide-react";
 
 const TABS = [
@@ -20,6 +21,7 @@ const TABS = [
   { href: "/ops/pipeline", label: "Pipeline", icon: Workflow },
   { href: "/ops/logistics", label: "Logistics", icon: Truck },
   { href: "/ops/products", label: "Products", icon: Package },
+  { href: "/ops/unsold", label: "Unsold", icon: AlertCircle },
   { href: "/ops/offers", label: "Offers", icon: HandCoins },
   { href: "/ops/orders", label: "Orders", icon: Receipt },
   { href: "/ops/customers", label: "Customers", icon: Users },

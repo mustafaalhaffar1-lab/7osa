@@ -244,6 +244,9 @@ export type Database = {
           seller_id: string
           seller_min_price: number | null
           seller_target_price: number | null
+          floor_reached_at: string | null
+          end_of_life_pref: string
+          company_owned: boolean
           shelf_code: string | null
           sku: string | null
           status: Database["public"]["Enums"]["item_status"]
@@ -275,6 +278,9 @@ export type Database = {
           seller_id: string
           seller_min_price?: number | null
           seller_target_price?: number | null
+          floor_reached_at?: string | null
+          end_of_life_pref?: string
+          company_owned?: boolean
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -306,6 +312,9 @@ export type Database = {
           seller_id?: string
           seller_min_price?: number | null
           seller_target_price?: number | null
+          floor_reached_at?: string | null
+          end_of_life_pref?: string
+          company_owned?: boolean
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -914,6 +923,23 @@ export type Database = {
       }
       ops_set_shelf: {
         Args: { p_item_id: string; p_shelf: string }
+        Returns: undefined
+      }
+      ops_resolve_unsold: {
+        Args: { p_item_id: string; p_action: string; p_amount?: number | null }
+        Returns: undefined
+      }
+      seller_update_item: {
+        Args: {
+          p_item_id: string
+          p_min_price?: number | null
+          p_pref?: string | null
+          p_auto_accept?: number | null
+        }
+        Returns: undefined
+      }
+      seller_withdraw_item: {
+        Args: { p_item_id: string }
         Returns: undefined
       }
       ops_accept_offer: { Args: { p_offer_id: string }; Returns: string }
