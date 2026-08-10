@@ -7,6 +7,7 @@ import { BRAND } from "@/lib/brand";
 import { Gallery } from "@/app/(buyer)/shop/[id]/Gallery";
 import { ProductActions } from "./ProductActions";
 import { PhotoShelfPanel, type ItemPhoto } from "./PhotoShelfPanel";
+import { InspectionPanel } from "./InspectionPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,25 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
     .maybeSingle();
 
   if (!item) notFound();
+
+  const { data: inspections } = await supabase
+    .from("inspections")
+    .select("condition_grade, functional_test_passed, data_wipe_certified, notes, created_at, profiles(full_name)")
+    .eq("item_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const insp = inspections?.[0];
+  const inspection = insp
+    ? {
+        condition_grade: insp.condition_grade,
+        functional_test_passed: insp.functional_test_passed,
+        data_wipe_certified: insp.data_wipe_certified,
+        notes: insp.notes,
+        created_at: insp.created_at,
+        inspector: (insp.profiles as unknown as { full_name: string | null } | null)?.full_name ?? null,
+      }
+    : null;
 
   const photoRows = ((item.item_photos as (ItemPhoto & { sort: number })[]) ?? []).sort(
     (a, b) => a.sort - b.sort
@@ -119,6 +139,14 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
           {/* Actions */}
           <div className="mt-4">
             <ProductActions itemId={item.id as string} status={item.status as string} currentPrice={listPrice} />
+          </div>
+
+          <div className="mt-4">
+            <InspectionPanel
+              itemId={item.id as string}
+              status={item.status as string}
+              inspection={inspection}
+            />
           </div>
 
           {/* Meta / seller */}

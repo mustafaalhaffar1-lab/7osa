@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, ShoppingCart } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useCart } from "@/components/store/CartProvider";
+import { CheckoutSheet, type DeliveryDetails, type DeliveryDefaults } from "@/components/store/CheckoutSheet";
 import { purchaseItem, makeOffer } from "../actions";
 
 export function BuyPanel({
@@ -13,11 +14,13 @@ export function BuyPanel({
   price,
   isAuthed,
   title,
+  deliveryDefaults,
 }: {
   itemId: string;
   price: number | null;
   isAuthed: boolean;
   title?: string;
+  deliveryDefaults?: DeliveryDefaults;
 }) {
   const router = useRouter();
   const { has, add, remove } = useCart();
@@ -25,6 +28,7 @@ export function BuyPanel({
   const [error, setError] = useState<string | null>(null);
   const [offer, setOffer] = useState("");
   const [offerSent, setOfferSent] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const inCart = has(itemId);
 
   const cartButton = (
@@ -37,12 +41,15 @@ export function BuyPanel({
     </button>
   );
 
-  function buy() {
+  function confirmPurchase(d: DeliveryDetails) {
     setError(null);
     start(async () => {
-      const res = await purchaseItem(itemId);
+      const res = await purchaseItem(itemId, d);
       if ("error" in res) setError(res.error);
-      else router.push("/purchases");
+      else {
+        setCheckingOut(false);
+        router.push("/account/orders");
+      }
     });
   }
 
@@ -68,7 +75,7 @@ export function BuyPanel({
         </div>
         {isAuthed ? (
           <button
-            onClick={buy}
+            onClick={() => setCheckingOut(true)}
             disabled={pending || price == null}
             className="shrink-0 rounded-full bg-brand px-6 py-2.5 font-semibold text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-60"
           >
@@ -107,7 +114,7 @@ export function BuyPanel({
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={buy}
+          onClick={() => setCheckingOut(true)}
           disabled={pending || price == null}
           className="w-full rounded-full bg-brand px-6 py-3 font-medium text-brand-fg transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 sm:w-auto sm:min-w-48"
         >
@@ -136,6 +143,18 @@ export function BuyPanel({
       {offerSent && <p className="text-sm text-brand">Offer sent — we&apos;ll be in touch.</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {stickyBar}
+
+      {checkingOut && price != null && (
+        <CheckoutSheet
+          total={price}
+          itemCount={1}
+          defaults={deliveryDefaults}
+          pending={pending}
+          error={error}
+          onConfirm={confirmPurchase}
+          onClose={() => setCheckingOut(false)}
+        />
+      )}
     </div>
   );
 }

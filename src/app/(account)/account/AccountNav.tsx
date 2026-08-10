@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Tag, ShoppingBag, Wallet, CalendarCheck, UserRound } from "lucide-react";
+import { LayoutGrid, Tag, ShoppingBag, Wallet, CalendarCheck, UserRound, Heart, Bell } from "lucide-react";
 
 const TABS = [
   { href: "/account", label: "Overview", icon: LayoutGrid },
   { href: "/account/selling", label: "Selling", icon: Tag },
   { href: "/account/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/account/saved", label: "Saved", icon: Heart },
   { href: "/account/wallet", label: "Wallet", icon: Wallet },
   { href: "/account/visits", label: "Visits", icon: CalendarCheck },
+  { href: "/account/notifications", label: "Alerts", icon: Bell },
   { href: "/account/profile", label: "Profile", icon: UserRound },
 ];
 

@@ -7,6 +7,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CartButton } from "./store/CartButton";
 import { AccountMenu } from "./store/AccountMenu";
 import { ScanButton } from "./store/ScanButton";
+import { NotificationBell } from "./store/NotificationBell";
 
 /** Commerce header: logo · search · Sell · cart · account, with a category strip below. */
 export async function SiteHeader() {
@@ -49,6 +50,7 @@ export async function SiteHeader() {
             >
               <Tag size={14} /> Sell
             </Link>
+            {user && <NotificationBell />}
             <CartButton />
             <AccountMenu signedIn={Boolean(user)} />
             <ThemeToggle />

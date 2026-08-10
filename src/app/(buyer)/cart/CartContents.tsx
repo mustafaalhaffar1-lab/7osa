@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/components/store/CartProvider";
 import { formatMoney } from "@/lib/format";
 import { purchaseItem } from "../shop/actions";
+import { CheckoutSheet, type DeliveryDetails, type DeliveryDefaults } from "@/components/store/CheckoutSheet";
 
 type CartRow = {
   id: string;
@@ -18,12 +19,20 @@ type CartRow = {
   photo: string | null;
 };
 
-export function CartContents({ signedIn }: { signedIn: boolean }) {
+export function CartContents({
+  signedIn,
+  deliveryDefaults,
+}: {
+  signedIn: boolean;
+  deliveryDefaults?: DeliveryDefaults;
+}) {
   const { ids, remove, count } = useCart();
   const router = useRouter();
   const [rows, setRows] = useState<CartRow[] | null>(null);
   const [pending, start] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Fetch live details for whatever is in the cart. Items sold since being added
   // simply won't come back from the listed-only query — surface them as unavailable.
@@ -73,13 +82,15 @@ export function CartContents({ signedIn }: { signedIn: boolean }) {
   const available = (rows ?? []).filter((r) => r.status === "listed" && r.list_price != null);
   const subtotal = available.reduce((sum, r) => sum + (r.list_price ?? 0), 0);
 
-  function checkout() {
+  function checkout(d: DeliveryDetails) {
     setErrors({});
+    setCheckoutError(null);
     start(async () => {
       const failed: Record<string, string> = {};
       let bought = 0;
+      // Each item is unique inventory, so it settles as its own order — same address.
       for (const row of available) {
-        const res = await purchaseItem(row.id);
+        const res = await purchaseItem(row.id, d);
         if ("error" in res) failed[row.id] = res.error;
         else {
           bought++;
@@ -87,8 +98,12 @@ export function CartContents({ signedIn }: { signedIn: boolean }) {
         }
       }
       setErrors(failed);
-      if (bought > 0 && Object.keys(failed).length === 0) {
-        router.push("/purchases");
+      if (Object.keys(failed).length > 0) {
+        setCheckoutError("Some items couldn't be ordered — see the notes above.");
+        setCheckingOut(false);
+      } else if (bought > 0) {
+        setCheckingOut(false);
+        router.push("/account/orders");
         router.refresh();
       }
     });
@@ -159,7 +174,7 @@ export function CartContents({ signedIn }: { signedIn: boolean }) {
         </div>
         {signedIn ? (
           <button
-            onClick={checkout}
+            onClick={() => setCheckingOut(true)}
             disabled={pending || available.length === 0}
             className="rounded-full bg-brand px-6 py-3 font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-60"
           >
@@ -174,6 +189,18 @@ export function CartContents({ signedIn }: { signedIn: boolean }) {
           </Link>
         )}
       </div>
+
+      {checkingOut && (
+        <CheckoutSheet
+          total={subtotal}
+          itemCount={available.length}
+          defaults={deliveryDefaults}
+          pending={pending}
+          error={checkoutError}
+          onConfirm={checkout}
+          onClose={() => setCheckingOut(false)}
+        />
+      )}
     </div>
   );
 }

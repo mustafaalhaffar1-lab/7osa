@@ -21,6 +21,7 @@ import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
 import { BuyPanel } from "./BuyPanel";
 import { Gallery } from "./Gallery";
+import { myDeliveryDefaults } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
 
   const user = await getUser();
+  const deliveryDefaults = user ? await myDeliveryDefaults() : undefined;
   const photos = ((item.item_photos as { url: string; sort: number }[]) ?? [])
     .sort((a, b) => a.sort - b.sort)
     .map((p) => p.url);
@@ -164,7 +166,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="mt-6">
-                <BuyPanel itemId={item.id as string} price={price} isAuthed={Boolean(user)} title={item.title as string} />
+                <BuyPanel
+                  itemId={item.id as string}
+                  price={price}
+                  isAuthed={Boolean(user)}
+                  title={item.title as string}
+                  deliveryDefaults={deliveryDefaults}
+                />
               </div>
 
               {/* Trust — woven into the buying moment, not a footnote */}

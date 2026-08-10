@@ -157,6 +157,24 @@ export type Database = {
           },
         ]
       }
+      saved_items: {
+        Row: {
+          user_id: string
+          item_id: string
+          created_at: string
+        }
+        Insert: {
+          user_id?: string
+          item_id: string
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          item_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       item_metrics: {
         Row: {
           item_id: string
@@ -357,6 +375,9 @@ export type Database = {
           floor_reached_at: string | null
           end_of_life_pref: string
           company_owned: boolean
+          price_approval: string
+          proposed_price: number | null
+          price_proposed_at: string | null
           shelf_code: string | null
           sku: string | null
           status: Database["public"]["Enums"]["item_status"]
@@ -391,6 +412,9 @@ export type Database = {
           floor_reached_at?: string | null
           end_of_life_pref?: string
           company_owned?: boolean
+          price_approval?: string
+          proposed_price?: number | null
+          price_proposed_at?: string | null
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -425,6 +449,9 @@ export type Database = {
           floor_reached_at?: string | null
           end_of_life_pref?: string
           company_owned?: boolean
+          price_approval?: string
+          proposed_price?: number | null
+          price_proposed_at?: string | null
           shelf_code?: string | null
           sku?: string | null
           status?: Database["public"]["Enums"]["item_status"]
@@ -559,6 +586,10 @@ export type Database = {
           status: string
           template: string
           user_id: string
+          title: string | null
+          body: string | null
+          link: string | null
+          read_at: string | null
         }
         Insert: {
           channel: string
@@ -568,6 +599,10 @@ export type Database = {
           status?: string
           template: string
           user_id: string
+          title: string | null
+          body: string | null
+          link: string | null
+          read_at: string | null
         }
         Update: {
           channel?: string
@@ -577,6 +612,10 @@ export type Database = {
           status?: string
           template?: string
           user_id?: string
+          title?: string | null
+          body?: string | null
+          link?: string | null
+          read_at?: string | null
         }
         Relationships: []
       }
@@ -693,6 +732,8 @@ export type Database = {
           method: string
           seller_id: string
           status: string
+          iban: string | null
+          holder: string | null
         }
         Insert: {
           amount: number
@@ -709,6 +750,8 @@ export type Database = {
           method?: string
           seller_id?: string
           status?: string
+          iban?: string | null
+          holder?: string | null
         }
         Relationships: [
           {
@@ -736,6 +779,7 @@ export type Database = {
           created_at: string
           updated_at: string
           stage_id: string | null
+          fee_collected: boolean
           report_summary: string | null
           declined_notes: string | null
           report_submitted_at: string | null
@@ -763,6 +807,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           stage_id?: string | null
+          fee_collected?: boolean
           report_summary?: string | null
           declined_notes?: string | null
           report_submitted_at?: string | null
@@ -790,6 +835,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           stage_id?: string | null
+          fee_collected?: boolean
           report_summary?: string | null
           declined_notes?: string | null
           report_submitted_at?: string | null
@@ -865,6 +911,8 @@ export type Database = {
           default_makani: string | null
           default_maps_url: string | null
           default_access_notes: string | null
+          bank_iban: string | null
+          bank_holder: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -887,6 +935,8 @@ export type Database = {
           default_makani?: string | null
           default_maps_url?: string | null
           default_access_notes?: string | null
+          bank_iban?: string | null
+          bank_holder?: string | null
         }
         Relationships: []
       }
@@ -1126,8 +1176,14 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      seller_decide_price: { Args: { p_item_id: string; p_approve: boolean }; Returns: undefined }
+      mark_notifications_read: { Args: { p_ids?: string[] | null }; Returns: undefined }
+      visit_slot_availability: {
+        Args: { p_zone_id: string | null; p_from: string; p_to: string }
+        Returns: { d: string; slot: string; booked: number; capacity: number }[]
+      }
       submit_visit_report: {
-        Args: { p_visit_id: string; p_summary?: string | null; p_declined?: string | null }
+        Args: { p_visit_id: string; p_summary?: string | null; p_declined?: string | null; p_fee_collected?: boolean }
         Returns: undefined
       }
       apply_markdowns: {
@@ -1272,6 +1328,10 @@ export type Database = {
       record_item_save: {
         Args: { p_item_id: string; p_delta: number }
         Returns: undefined
+      }
+      toggle_saved_item: {
+        Args: { p_item_id: string; p_saved: boolean }
+        Returns: boolean
       }
     }
     Enums: {

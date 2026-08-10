@@ -77,13 +77,15 @@ export async function addItemFromVisit(input: {
 export async function submitVisitReport(
   visitId: string,
   summary: string,
-  declined: string
+  declined: string,
+  feeCollected = false
 ): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("submit_visit_report", {
     p_visit_id: visitId,
     p_summary: summary || null,
     p_declined: declined || null,
+    p_fee_collected: feeCollected,
   });
   if (error) return { error: error.message };
   revalidatePath(`/ops/visits/${visitId}`);

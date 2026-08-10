@@ -15,6 +15,7 @@ import {
   Repeat,
   PackageCheck,
   Wallet,
+  UserRound,
   X,
 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
@@ -45,9 +46,11 @@ export type PipelineVisit = {
   report_submitted_at: string | null;
   contact_phone: string | null;
   seller_id: string;
+  agent_id: string | null;
   zones: { name: string } | null;
   profiles: { full_name: string | null } | null;
   seller_visit_count: number;
+  agent_name: string | null;
 };
 
 const SLOT_SHORT: Record<string, string> = {
@@ -218,6 +221,16 @@ function VisitCard({
           {visit.items_collected > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-1.5 py-0.5 font-medium text-brand">
               <PackageCheck size={9} /> {visit.items_collected}
+            </span>
+          )}
+          {/* Who's actually going. A visit with nobody on it is the thing that gets missed. */}
+          {visit.agent_name ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-bg px-1.5 py-0.5 font-medium text-muted">
+              <UserRound size={9} /> {visit.agent_name.split(" ")[0]}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 font-medium text-amber-600 dark:text-amber-400">
+              <UserRound size={9} /> No agent
             </span>
           )}
         </div>

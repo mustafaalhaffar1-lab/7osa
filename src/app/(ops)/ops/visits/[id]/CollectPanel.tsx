@@ -58,6 +58,7 @@ export function CollectPanel({
   const [summary, setSummary] = useState("");
   const [declined, setDeclined] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [feeCollected, setFeeCollected] = useState(false);
 
   const categoryName = categories.find((c) => c.id === categoryId)?.name;
   const est = estimateValue({
@@ -123,7 +124,7 @@ export function CollectPanel({
   function submitReport() {
     setError(null);
     start(async () => {
-      const res = await submitVisitReport(visitId, summary, declined);
+      const res = await submitVisitReport(visitId, summary, declined, feeCollected);
       if (res?.error) setError(res.error);
       else {
         setReporting(false);
@@ -321,6 +322,26 @@ export function CollectPanel({
                 className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-sm outline-none focus:border-brand"
               />
             </Field>
+            {/* The visit fee is cash in hand at the door — if nobody records it, it's lost. */}
+            <button
+              onClick={() => setFeeCollected((v) => !v)}
+              className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-xs transition-colors ${
+                feeCollected ? "border-brand bg-brand/5" : "border-border bg-bg"
+              }`}
+            >
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                  feeCollected ? "border-brand bg-brand text-brand-fg" : "border-border"
+                }`}
+              >
+                {feeCollected && <CheckCircle2 size={11} />}
+              </span>
+              <span>
+                <span className="block font-medium">Visit fee collected</span>
+                <span className="text-muted">Tick only if the seller paid you at the door.</span>
+              </span>
+            </button>
+
             {error && <p className="text-xs text-red-500">{error}</p>}
             <div className="flex gap-2">
               <button

@@ -27,7 +27,7 @@ export default async function WalletPage() {
   const user = await getUser();
   const supabase = await createClient();
 
-  const [{ data: wallet }, { data: txns }, { data: payouts }, { data: heldOrders }] = await Promise.all([
+  const [{ data: wallet }, { data: txns }, { data: payouts }, { data: heldOrders }, { data: profile }] = await Promise.all([
     supabase.from("wallets").select("balance").eq("user_id", user!.id).maybeSingle(),
     supabase
       .from("wallet_transactions")
@@ -40,6 +40,7 @@ export default async function WalletPage() {
       .select("id, seller_payout, payout_release_at, items!inner(seller_id)")
       .eq("payout_status", "held")
       .eq("items.seller_id", user!.id),
+    supabase.from("profiles").select("bank_iban, bank_holder").eq("id", user!.id).maybeSingle(),
   ]);
 
   const balance = Number(wallet?.balance ?? 0);
@@ -78,7 +79,7 @@ export default async function WalletPage() {
             </div>
           )}
         </div>
-        <CashOut balance={balance} />
+        <CashOut balance={balance} iban={profile?.bank_iban} holder={profile?.bank_holder} />
       </div>
 
       {payouts && payouts.length > 0 && (

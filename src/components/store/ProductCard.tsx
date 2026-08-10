@@ -69,11 +69,18 @@ function useWishlist(id: string) {
       localStorage.setItem(WISH_KEY, JSON.stringify(next));
     } catch {}
     setWished(isAdding);
-    // Real save counts — powers "Most saved" and the card's ❤ figure.
-    createClient().rpc("record_item_save", { p_item_id: id, p_delta: isAdding ? 1 : -1 }).then(
-      () => {},
-      () => {}
-    );
+    const supabase = createClient();
+    // Signed-in saves persist server-side (and subscribe to price drops); guests
+    // fall back to the counter-only RPC so the ❤ figure still moves.
+    supabase.auth.getUser().then(({ data }) => {
+      const call = data.user
+        ? supabase.rpc("toggle_saved_item", { p_item_id: id, p_saved: isAdding })
+        : supabase.rpc("record_item_save", { p_item_id: id, p_delta: isAdding ? 1 : -1 });
+      call.then(
+        () => {},
+        () => {}
+      );
+    });
   }
   return { wished, toggle };
 }

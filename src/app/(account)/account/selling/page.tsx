@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 import type { ItemStatus } from "@/lib/domain/item-state";
 import { ItemControls } from "@/app/(seller)/my-items/ItemControls";
+import { PriceApproval } from "./PriceApproval";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function SellingPage() {
   const { data: items } = await supabase
     .from("items")
     .select(
-      "id, title, brand, status, possession, list_price, ai_estimate_min, ai_estimate_max, seller_min_price, auto_accept_above, end_of_life_pref, company_owned, sell_by, item_photos(url), item_metrics(views, saves)"
+      "id, title, brand, status, possession, list_price, ai_estimate_min, ai_estimate_max, seller_min_price, auto_accept_above, end_of_life_pref, company_owned, sell_by, price_approval, proposed_price, price_proposed_at, item_photos(url), item_metrics(views, saves)"
     )
     .order("created_at", { ascending: false });
 
@@ -149,6 +150,17 @@ export default async function SellingPage() {
                     )}
                   </div>
                 </div>
+                {it.price_approval === "pending" && it.proposed_price != null && (
+                  <div className="mt-3">
+                    <PriceApproval
+                      itemId={it.id}
+                      proposed={Number(it.proposed_price)}
+                      estimateMin={it.ai_estimate_min != null ? Number(it.ai_estimate_min) : null}
+                      sellerMin={it.seller_min_price != null ? Number(it.seller_min_price) : null}
+                      proposedAt={it.price_proposed_at as string | null}
+                    />
+                  </div>
+                )}
                 <div className="mt-3 border-t border-border pt-3">
                   <ItemControls
                     itemId={it.id}

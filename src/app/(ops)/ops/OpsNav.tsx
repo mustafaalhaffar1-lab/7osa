@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Workflow,
   Package,
   Receipt,
   Users,
@@ -20,7 +19,6 @@ const TABS = [
   { href: "/ops/visits", label: "Visits", icon: CalendarCheck },
   { href: "/ops/logistics", label: "Dispatch", icon: Truck },
   { href: "/ops/receiving", label: "Receiving", icon: PackageCheck },
-  { href: "/ops/pipeline", label: "Pipeline", icon: Workflow },
   { href: "/ops/inventory", label: "Inventory", icon: Package },
   { href: "/ops/orders", label: "Orders", icon: Receipt },
   { href: "/ops/returns", label: "Returns", icon: Undo2 },

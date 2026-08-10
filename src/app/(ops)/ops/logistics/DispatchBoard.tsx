@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Phone,
   Navigation,
   AlertTriangle,
@@ -15,6 +17,7 @@ import {
   PackageX,
   CalendarDays,
   ClipboardList,
+  Layers,
 } from "lucide-react";
 import {
   JOB_TYPE,
@@ -215,6 +218,9 @@ export function DispatchBoard({
                 {unassigned.length}
               </span>
             </div>
+            {unassigned.length > 1 && (
+              <BulkAssign jobs={unassigned} drivers={drivers} carriers={carriers} date={date} />
+            )}
             <div className="max-h-[70vh] space-y-2 overflow-y-auto p-3">
               {unassigned.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted">Everything is assigned. 🎉</p>
@@ -256,17 +262,34 @@ export function DispatchBoard({
                 </div>
                 <div className="space-y-3 p-3">
                   {SLOTS.map((slot) => {
-                    const slotJobs = mine.filter((j) => j.slot === slot.key);
+                    // Stops run in sequence order; unsequenced jobs sink to the bottom.
+                    const slotJobs = mine
+                      .filter((j) => j.slot === slot.key)
+                      .sort((a, b) => (a.sequence ?? 999) - (b.sequence ?? 999));
                     if (slotJobs.length === 0) return null;
                     return (
                       <div key={slot.key}>
                         <div className="mb-1.5 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-muted">
                           {slot.label} <span className="font-normal normal-case">{slot.hours}</span>
                           <span className="h-px flex-1 bg-border" />
+                          <span className="font-normal normal-case">
+                            {slotJobs.length} stop{slotJobs.length === 1 ? "" : "s"}
+                          </span>
                         </div>
                         <div className="space-y-2">
-                          {slotJobs.map((j) => (
-                            <JobCard key={j.id} job={j} drivers={drivers} carriers={carriers} date={date} />
+                          {slotJobs.map((j, i) => (
+                            <JobCard
+                              key={j.id}
+                              job={j}
+                              drivers={drivers}
+                              carriers={carriers}
+                              date={date}
+                              stop={{
+                                index: i,
+                                total: slotJobs.length,
+                                siblings: slotJobs.map((x) => x.id),
+                              }}
+                            />
                           ))}
                         </div>
                       </div>
@@ -295,6 +318,71 @@ export function DispatchBoard({
   );
 }
 
+/**
+ * Assigning eight stops one at a time is the single most tedious thing on this
+ * screen. One tap gives a whole zone's worth of work to one person, sequenced
+ * in the order they're listed.
+ */
+function BulkAssign({
+  jobs,
+  drivers,
+  carriers,
+  date,
+}: {
+  jobs: DispatchJob[];
+  drivers: Assignee[];
+  carriers: Assignee[];
+  date: string;
+}) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function assignAll(a: Assignee) {
+    setError(null);
+    start(async () => {
+      for (let i = 0; i < jobs.length; i++) {
+        const j = jobs[i];
+        const res = await dispatchJob(j.id, {
+          driverId: a.kind === "driver" ? a.id : null,
+          carrierId: a.kind === "carrier" ? a.id : null,
+        });
+        if (res?.error) {
+          setError(res.error);
+          break;
+        }
+        await scheduleJob(j.id, date, j.slot ?? undefined, i + 1);
+      }
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="border-b border-border bg-bg/50 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted">
+          <Layers size={10} /> Give all {jobs.length} to
+        </span>
+        {[...drivers, ...carriers].map((a) => (
+          <button
+            key={a.id}
+            disabled={pending}
+            onClick={() => assignAll(a)}
+            className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors disabled:opacity-50 ${
+              a.kind === "carrier"
+                ? "border border-blue-500/40 text-blue-600 hover:bg-blue-500/10 dark:text-blue-400"
+                : "border border-border text-muted hover:border-brand hover:text-brand"
+            }`}
+          >
+            {pending ? "…" : a.name}
+          </button>
+        ))}
+      </div>
+      {error && <p className="mt-1.5 text-[11px] text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 function Stat({ label, value, tone }: { label: string; value: number; tone?: "warn" | "bad" }) {
   return (
     <span
@@ -316,11 +404,14 @@ function JobCard({
   drivers,
   carriers,
   date,
+  stop,
 }: {
   job: DispatchJob;
   drivers: Assignee[];
   carriers: Assignee[];
   date: string;
+  /** Present only inside a driver's slot column, where order is meaningful. */
+  stop?: { index: number; total: number; siblings: string[] };
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -346,10 +437,49 @@ function JobCard({
     });
   }
 
+  /** Swap this stop with its neighbour by rewriting both sequence numbers. */
+  function move(dir: -1 | 1) {
+    if (!stop) return;
+    const target = stop.index + dir;
+    if (target < 0 || target >= stop.total) return;
+    const reordered = [...stop.siblings];
+    [reordered[stop.index], reordered[target]] = [reordered[target], reordered[stop.index]];
+    run(async () => {
+      for (let i = 0; i < reordered.length; i++) {
+        const res = await scheduleJob(reordered[i], date, job.slot ?? undefined, i + 1);
+        if (res?.error) return res;
+      }
+      return {};
+    });
+  }
+
   return (
     <div className={`rounded-xl border bg-bg p-3 ${finished ? "border-border opacity-70" : "border-border"}`}>
       {/* Line 1: what and where */}
       <div className="flex items-start gap-2.5">
+        {stop && !finished ? (
+          <div className="flex shrink-0 flex-col items-center">
+            <button
+              onClick={() => move(-1)}
+              disabled={pending || stop.index === 0}
+              aria-label="Move stop earlier"
+              className="text-muted transition-colors hover:text-brand disabled:opacity-25"
+            >
+              <ChevronUp size={13} />
+            </button>
+            <span className="my-0.5 inline-flex h-6 w-6 items-center justify-center rounded-lg bg-ink text-[11px] font-bold text-bg">
+              {stop.index + 1}
+            </span>
+            <button
+              onClick={() => move(1)}
+              disabled={pending || stop.index === stop.total - 1}
+              aria-label="Move stop later"
+              className="text-muted transition-colors hover:text-brand disabled:opacity-25"
+            >
+              <ChevronDown size={13} />
+            </button>
+          </div>
+        ) : null}
         <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${meta.tone}`}>
           <Icon size={14} />
         </span>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarCheck, Check } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { bookVisit } from "./actions";
 
 type Zone = { id: string; name: string };
@@ -62,6 +63,46 @@ export function VisitForm({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  // Live capacity. Offering a slot we can't staff is worse than not offering it.
+  const [availability, setAvailability] = useState<Record<string, { booked: number; capacity: number }>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const from = dates[0]?.value;
+    const to = dates[dates.length - 1]?.value;
+    if (!from || !to) return;
+    createClient()
+      .rpc("visit_slot_availability", { p_zone_id: zoneId || null, p_from: from, p_to: to })
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const map: Record<string, { booked: number; capacity: number }> = {};
+        for (const r of data) map[`${r.d}|${r.slot}`] = { booked: r.booked, capacity: r.capacity };
+        setAvailability(map);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // dates is regenerated each render but always covers the same 14 days.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneId, done]);
+
+  const slotState = (d: string, s: Slot) => {
+    const a = availability[`${d}|${s}`];
+    if (!a) return { full: false, left: null as number | null };
+    const left = a.capacity - a.booked;
+    return { full: left <= 0, left };
+  };
+
+  const dayFull = (d: string) => SLOTS.every((s) => slotState(d, s.key).full);
+
+  // Never leave the seller sitting on a slot that filled up while they typed.
+  useEffect(() => {
+    if (slotState(date, slot).full) {
+      const open = SLOTS.find((s) => !slotState(date, s.key).full);
+      if (open) setSlot(open.key);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, availability]);
 
   function submit() {
     setError(null);
@@ -209,34 +250,58 @@ export function VisitForm({
       <div>
         <span className="mb-1.5 block text-sm font-medium">Date</span>
         <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {dates.map((d) => (
-            <button
-              key={d.value}
-              onClick={() => setDate(d.value)}
-              className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
-                date === d.value ? "border-brand bg-brand text-brand-fg" : "border-border text-muted hover:border-ink hover:text-ink"
-              }`}
-            >
-              {d.label}
-            </button>
-          ))}
+          {dates.map((d) => {
+            const full = dayFull(d.value);
+            return (
+              <button
+                key={d.value}
+                onClick={() => !full && setDate(d.value)}
+                disabled={full}
+                title={full ? "Fully booked" : undefined}
+                className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                  date === d.value
+                    ? "border-brand bg-brand text-brand-fg"
+                    : full
+                      ? "cursor-not-allowed border-border text-muted line-through opacity-40"
+                      : "border-border text-muted hover:border-ink hover:text-ink"
+                }`}
+              >
+                {d.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div>
         <span className="mb-1.5 block text-sm font-medium">Time slot</span>
         <div className="grid grid-cols-3 gap-2">
-          {SLOTS.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setSlot(s.key)}
-              className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors ${
-                slot === s.key ? "border-brand bg-brand text-brand-fg" : "border-border text-muted hover:border-ink hover:text-ink"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
+          {SLOTS.map((s) => {
+            const { full, left } = slotState(date, s.key);
+            return (
+              <button
+                key={s.key}
+                onClick={() => !full && setSlot(s.key)}
+                disabled={full}
+                className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors ${
+                  slot === s.key
+                    ? "border-brand bg-brand text-brand-fg"
+                    : full
+                      ? "cursor-not-allowed border-border text-muted opacity-40"
+                      : "border-border text-muted hover:border-ink hover:text-ink"
+                }`}
+              >
+                <span className="block">{s.label}</span>
+                {full ? (
+                  <span className="mt-0.5 block text-[10px] font-normal opacity-80">Fully booked</span>
+                ) : left != null && left <= 2 ? (
+                  <span className="mt-0.5 block text-[10px] font-normal text-accent">
+                    {left} slot{left === 1 ? "" : "s"} left
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -255,7 +320,7 @@ export function VisitForm({
 
       <button
         onClick={submit}
-        disabled={pending || !address.trim() || !date}
+        disabled={pending || !address.trim() || !date || !phone.trim() || slotState(date, slot).full}
         className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-semibold text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <CalendarCheck size={16} />

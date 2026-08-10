@@ -37,6 +37,8 @@ export async function opsInspect(
   });
   if (error) return { error: error.message };
   revalidatePath("/ops");
+  revalidatePath("/ops/receiving");
+  revalidatePath(`/ops/inventory/products/${itemId}`);
   return {};
 }
 
