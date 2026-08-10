@@ -1,55 +1,88 @@
 import Link from "next/link";
-import { PackageCheck, CalendarCheck, Truck, ClipboardList, QrCode, ArrowRight } from "lucide-react";
+import { PackageCheck, CalendarCheck, Truck, ClipboardList, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/format";
 import { BRAND } from "@/lib/brand";
+import { ReceivingRow, BatchReceiveButton, VanBanner, type ReceivingItem } from "./ReceivingBoard";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The warehouse door. Everything that has physically arrived but isn't ready to sell yet,
- * grouped by how it got here — a visit batch or an individual pickup.
+ * The warehouse door. Everything collected but not yet sellable, grouped by how it got
+ * here — a visit batch or an individual pickup — and actionable in place: book it in,
+ * inspect it, price it, list it.
  */
 export default async function ReceivingPage() {
   const supabase = await createClient();
 
-  const [{ data: items }, { data: visits }] = await Promise.all([
-    supabase
-      .from("items")
-      .select("id, sku, title, brand, status, list_price, ai_estimate_min, ai_estimate_max, description, visit_id, shelf_code, created_at, item_photos(url), profiles!items_seller_id_fkey(full_name)")
-      .in("status", ["collected", "received", "inspected"])
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("pickup_visits")
-      .select("id, scheduled_date, report_summary, declined_notes, report_submitted_at, items_collected, profiles!pickup_visits_seller_id_fkey(full_name)")
-      .not("report_submitted_at", "is", null)
-      .order("report_submitted_at", { ascending: false }),
-  ]);
+  const { data: items } = await supabase
+    .from("items")
+    .select("id, sku, title, brand, status, list_price, ai_estimate_min, ai_estimate_max, description, visit_id, shelf_code, created_at, item_photos(url), inspections(id)")
+    .in("status", ["collected", "received", "inspected"])
+    .order("created_at", { ascending: true });
 
-  const list = items ?? [];
+  // Fetch visits by the ids the items actually reference. Keying off "report submitted"
+  // instead hid any item collected on a visit whose report was never filed.
+  const visitIds = [...new Set((items ?? []).map((i) => i.visit_id).filter(Boolean))] as string[];
+  const { data: visits } = visitIds.length
+    ? await supabase
+        .from("pickup_visits")
+        .select("id, scheduled_date, report_summary, declined_notes, report_submitted_at, items_collected, profiles!pickup_visits_seller_id_fkey(full_name)")
+        .in("id", visitIds)
+        .order("scheduled_date", { ascending: false })
+    : { data: [] };
+
+  const list: (ReceivingItem & { visit_id: string | null })[] = (items ?? []).map((it) => {
+    const photos = (it.item_photos as { url: string }[] | null) ?? [];
+    return {
+      id: it.id,
+      sku: it.sku,
+      title: it.title,
+      brand: it.brand,
+      status: it.status,
+      list_price: it.list_price,
+      ai_estimate_min: it.ai_estimate_min,
+      ai_estimate_max: it.ai_estimate_max,
+      description: it.description,
+      shelf_code: it.shelf_code,
+      photo: photos[0]?.url ?? null,
+      photoCount: photos.length,
+      // An inspection record is the only honest source — status can be overridden by hand.
+      inspected: ((it.inspections as { id: string }[] | null) ?? []).length > 0,
+      visit_id: it.visit_id,
+    };
+  });
+
   const byVisit = new Map<string, typeof list>();
   const loose: typeof list = [];
   for (const it of list) {
-    if (it.visit_id) {
-      byVisit.set(it.visit_id, [...(byVisit.get(it.visit_id) ?? []), it]);
-    } else {
-      loose.push(it);
-    }
+    if (it.visit_id) byVisit.set(it.visit_id, [...(byVisit.get(it.visit_id) ?? []), it]);
+    else loose.push(it);
   }
 
   const visitBatches = (visits ?? [])
     .map((v) => ({ visit: v, items: byVisit.get(v.id) ?? [] }))
     .filter((b) => b.items.length > 0);
 
+  const inVan = list.filter((i) => i.status === "collected").length;
+  const readyToList = list.filter((i) => i.status !== "collected" && i.inspected && i.list_price == null).length;
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Receiving</h1>
-        <p className="mt-0.5 text-sm text-muted">
-          Goods that have arrived and still need inspecting, photographing, barcoding and pricing
-          before they go on sale.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Receiving</h1>
+          <p className="mt-0.5 text-sm text-muted">
+            Everything collected but not yet on sale. Book it in, check it, photograph it, price it.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Stat label="in the van" value={inVan} tone={inVan > 0 ? "warn" : undefined} />
+          <Stat label="on the floor" value={list.length - inVan} />
+          <Stat label="ready to list" value={readyToList} tone={readyToList > 0 ? "good" : undefined} />
+        </div>
       </div>
+
+      {inVan > 0 && <VanBanner count={inVan} />}
 
       {list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border px-6 py-16 text-center">
@@ -61,6 +94,7 @@ export default async function ReceivingPage() {
           {/* Batches that came back from a paid visit */}
           {visitBatches.map(({ visit, items: batch }) => {
             const seller = (visit.profiles as { full_name: string | null } | null)?.full_name;
+            const toReceive = batch.filter((i) => i.status === "collected").map((i) => i.id);
             return (
               <section key={visit.id} className="rounded-2xl border border-brand/30 bg-surface shadow-card">
                 <div className="border-b border-border px-5 py-4">
@@ -82,8 +116,19 @@ export default async function ReceivingPage() {
                       <Link href={`/ops/visits/${visit.id}`} className="font-medium text-brand hover:underline">
                         Visit
                       </Link>
+                      <BatchReceiveButton ids={toReceive} />
                     </div>
                   </div>
+                  {!visit.report_submitted_at && (
+                    <p className="mt-1.5 inline-flex items-start gap-1.5 rounded-lg bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
+                      <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                      The agent hasn&apos;t filed a report for this visit yet —{" "}
+                      <Link href={`/ops/visits/${visit.id}`} className="font-medium underline">
+                        chase it
+                      </Link>
+                      .
+                    </p>
+                  )}
                   {visit.report_summary && (
                     <p className="mt-1.5 inline-flex items-start gap-1.5 text-xs text-muted">
                       <ClipboardList size={12} className="mt-0.5 shrink-0" /> “{visit.report_summary}”
@@ -107,11 +152,14 @@ export default async function ReceivingPage() {
           {/* Individually collected items */}
           {loose.length > 0 && (
             <section className="rounded-2xl border border-border bg-surface shadow-card">
-              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-4">
                 <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
                   <Truck size={15} className="text-brand" /> Collected individually
                 </h2>
-                <span className="text-xs text-muted">{loose.length} to process</span>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <span>{loose.length} to process</span>
+                  <BatchReceiveButton ids={loose.filter((i) => i.status === "collected").map((i) => i.id)} />
+                </div>
               </div>
               <ul className="divide-y divide-border">
                 {loose.map((it) => (
@@ -126,87 +174,18 @@ export default async function ReceivingPage() {
   );
 }
 
-type Row = {
-  id: string;
-  sku: string | null;
-  title: string;
-  brand: string | null;
-  status: string;
-  list_price: number | null;
-  ai_estimate_min: number | null;
-  ai_estimate_max: number | null;
-  description: string | null;
-  shelf_code: string | null;
-  item_photos: { url: string }[] | null;
-};
-
-/** What still needs doing to this item before it can be listed. */
-function nextStep(it: Row): { label: string; done: boolean }[] {
-  const photos = it.item_photos?.length ?? 0;
-  return [
-    { label: "Inspect", done: it.status === "inspected" },
-    { label: "Photos", done: photos > 1 },
-    { label: "Shelf", done: Boolean(it.shelf_code) },
-    { label: "Price", done: it.list_price != null },
-  ];
-}
-
-function ReceivingRow({ item }: { item: Row }) {
-  const photo = item.item_photos?.[0]?.url;
-  const steps = nextStep(item);
-  const remaining = steps.filter((s) => !s.done).length;
-
+function Stat({ label, value, tone }: { label: string; value: number; tone?: "warn" | "good" }) {
   return (
-    <li>
-      <Link href={`/ops/inventory/products/${item.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-bg">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-bg">
-          {photo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" className="h-full w-full object-cover" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">
-            {item.brand ? `${item.brand} · ` : ""}
-            {item.title}
-          </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
-            {item.sku && (
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-brand">
-                <QrCode size={10} /> {item.sku}
-              </span>
-            )}
-            <span className="capitalize">{item.status}</span>
-            {item.ai_estimate_min != null && item.ai_estimate_max != null && (
-              <span>
-                est. {formatMoney(Number(item.ai_estimate_min))} – {formatMoney(Number(item.ai_estimate_max))}
-              </span>
-            )}
-          </div>
-          {item.description && (
-            <p className="mt-1 truncate text-xs italic text-muted">“{item.description}”</p>
-          )}
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {steps.map((s) => (
-              <span
-                key={s.label}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                  s.done ? "bg-green-500/10 text-green-600 dark:text-green-400" : "border border-border text-muted"
-                }`}
-              >
-                {s.done ? "✓ " : ""}
-                {s.label}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="text-xs font-medium text-muted">
-            {remaining === 0 ? "Ready to list" : `${remaining} step${remaining === 1 ? "" : "s"} left`}
-          </div>
-          <ArrowRight size={15} className="ml-auto mt-1 text-muted" />
-        </div>
-      </Link>
-    </li>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${
+        tone === "warn"
+          ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+          : tone === "good"
+            ? "border-brand/40 bg-brand/10 text-brand"
+            : "border-border bg-surface text-muted"
+      }`}
+    >
+      <span className="font-bold">{value}</span> {label}
+    </span>
   );
 }

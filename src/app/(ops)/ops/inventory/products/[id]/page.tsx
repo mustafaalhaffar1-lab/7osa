@@ -138,7 +138,12 @@ export default async function OpsProductDetail({ params }: { params: Promise<{ i
 
           {/* Actions */}
           <div className="mt-4">
-            <ProductActions itemId={item.id as string} status={item.status as string} currentPrice={listPrice} />
+            <ProductActions
+              itemId={item.id as string}
+              status={item.status as string}
+              possession={item.possession as "warehouse" | "in_place"}
+              currentPrice={listPrice}
+            />
           </div>
 
           <div className="mt-4">

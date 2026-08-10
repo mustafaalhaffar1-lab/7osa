@@ -19,6 +19,8 @@ export async function opsSetStatus(itemId: string, to: ItemStatus) {
   const { error } = await supabase.rpc("ops_set_status", { p_item_id: itemId, p_to: to });
   if (error) return { error: error.message };
   revalidatePath("/ops");
+  revalidatePath("/ops/receiving");
+  revalidatePath(`/ops/inventory/products/${itemId}`);
   return {};
 }
 
@@ -48,5 +50,9 @@ export async function opsList(itemId: string, listPrice: number) {
   const { error } = await supabase.rpc("ops_list_item", { p_item_id: itemId, p_list_price: listPrice });
   if (error) return { error: error.message };
   revalidatePath("/ops");
+  revalidatePath("/ops/receiving");
+  revalidatePath("/ops/inventory/products");
+  revalidatePath(`/ops/inventory/products/${itemId}`);
+  revalidatePath("/shop");
   return {};
 }

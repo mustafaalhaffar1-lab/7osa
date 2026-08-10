@@ -2,6 +2,20 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Building2,
+  Receipt,
+  Banknote,
+  Percent,
+  TrendingDown,
+  CalendarCheck,
+  Truck,
+  Ruler,
+  MapPin,
+  Package,
+  Users,
+  ChevronRight,
+} from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import type { PossessionMode } from "@/lib/domain/item-state";
 import type { AppRole } from "@/lib/domain/enums";
@@ -24,6 +38,30 @@ type Category = { id: string; name: string; possession_default: string; active: 
 type StaffMember = { id: string; email: string; fullName: string | null; roles: string[] };
 
 const STAFF_ROLES: AppRole[] = ["ops_agent", "driver", "admin"];
+
+type SectionKey =
+  | "business"
+  | "tax"
+  | "floor"
+  | "tiers"
+  | "markdown"
+  | "visitFee"
+  | "delivery"
+  | "scope"
+  | "zones"
+  | "categories"
+  | "staff";
+
+const GROUPS = ["Business", "Money", "Operations", "Access"] as const;
+
+type Section = {
+  key: SectionKey;
+  group: (typeof GROUPS)[number];
+  label: string;
+  sub: string;
+  icon: typeof Building2;
+  count?: number;
+};
 
 export function SettingsForms({
   amAdmin,
@@ -100,29 +138,111 @@ export function SettingsForms({
 
   const disabled = !amAdmin || pending;
 
-  return (
-    <div className="mt-5 space-y-5">
-      {(error || notice) && (
-        <p
-          className={`rounded-xl px-4 py-2.5 text-sm ${
-            error ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-brand/10 text-brand"
-          }`}
-        >
-          {error ?? notice}
-        </p>
-      )}
+  const [section, setSection] = useState<SectionKey>("business");
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {/* Concierge value floor */}
-        <Card title="Concierge value floor" sub="Minimum expected sale value to accept an item. Below this, sellers are routed to self-serve.">
+  // The index. Counts sit on the rows so you can see what's configured without clicking.
+  const SECTIONS: Section[] = [
+    { key: "business", group: "Business", label: "Business details", icon: Building2,
+      sub: "Shown to customers in emails, receipts, and support links." },
+    { key: "tax", group: "Business", label: "Tax (VAT)", icon: Receipt,
+      sub: "UAE VAT settings used on invoices and receipts." },
+    { key: "floor", group: "Money", label: "Concierge value floor", icon: Banknote,
+      sub: "Minimum expected sale value to accept an item. Below this, sellers are routed to self-serve." },
+    { key: "tiers", group: "Money", label: "Commission tiers", icon: Percent, count: tiers.length,
+      sub: "Hoosa's cut by final sale price. The seller keeps the rest — shown live on the sell page." },
+    { key: "markdown", group: "Money", label: "Markdown clock", icon: TrendingDown,
+      sub: "Unsold items drop automatically — the engine behind every countdown on the storefront." },
+    { key: "visitFee", group: "Money", label: "Pickup visit fee", icon: CalendarCheck,
+      sub: "Charged when a seller books a home visit — credited back to their wallet on their first sale." },
+    { key: "delivery", group: "Money", label: "Delivery", icon: Truck,
+      sub: "What buyers pay for delivery. Set 0 for free delivery on everything." },
+    { key: "scope", group: "Operations", label: "What we accept", icon: Ruler,
+      sub: "Items bigger or heavier than this are declined at intake. These limits govern the seller wizard live." },
+    { key: "zones", group: "Operations", label: "Zones", icon: MapPin, count: zones.filter((z) => z.active).length,
+      sub: "Where Hoosa picks up and delivers." },
+    { key: "categories", group: "Operations", label: "Categories", icon: Package,
+      count: categories.filter((c) => c.active).length,
+      sub: "What Hoosa accepts, and the default custody model for each." },
+    { key: "staff", group: "Access", label: "System users & roles", icon: Users, count: staff.length,
+      sub: "Who can access the operations console. ops_agent & driver operate; admin can also configure and manage roles." },
+  ];
+
+  const active = SECTIONS.find((s) => s.key === section)!;
+
+  return (
+    <div className="mt-5 lg:grid lg:grid-cols-[260px_1fr] lg:gap-6">
+      {/* Left: the index */}
+      <nav aria-label="Settings sections" className="lg:sticky lg:top-24 lg:self-start">
+        {/* Phone: a scrollable strip, same list, different shape */}
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setSection(s.key)}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                section === s.key ? "bg-brand text-brand-fg" : "border border-border bg-surface text-muted"
+              }`}
+            >
+              <s.icon size={14} /> {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-2xl border border-border bg-surface lg:block">
+          {GROUPS.map((group) => (
+            <div key={group} className="border-b border-border last:border-b-0">
+              <div className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                {group}
+              </div>
+              {SECTIONS.filter((s) => s.group === group).map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setSection(s.key)}
+                  aria-label={s.label}
+                  aria-current={section === s.key ? "true" : undefined}
+                  className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors ${
+                    section === s.key
+                      ? "bg-brand/10 font-semibold text-brand"
+                      : "text-muted hover:bg-bg hover:text-ink"
+                  }`}
+                >
+                  <s.icon size={15} className="shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{s.label}</span>
+                  {s.count != null && (
+                    <span className="shrink-0 text-[11px] text-muted">{s.count}</span>
+                  )}
+                  <ChevronRight
+                    size={13}
+                    className={`shrink-0 ${section === s.key ? "text-brand" : "text-muted opacity-0"}`}
+                  />
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </nav>
+
+      {/* Right: just the one you picked */}
+      <div className="mt-4 space-y-4 lg:mt-0">
+        {(error || notice) && (
+          <p
+            className={`rounded-xl px-4 py-2.5 text-sm ${
+              error ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-brand/10 text-brand"
+            }`}
+          >
+            {error ?? notice}
+          </p>
+        )}
+
+        <Card title={active.label} sub={active.sub}>
+          {section === "floor" && (
           <div className="flex items-center gap-2">
             <Input value={floorVal} onChange={setFloorVal} prefix="AED" disabled={disabled} />
             <SaveBtn disabled={disabled} onClick={() => run(() => updateValueFloor(parseFloat(floorVal)), "Value floor updated.")} />
           </div>
-        </Card>
+          )}
 
-        {/* Markdown clock */}
-        <Card title="Markdown clock" sub="Unsold items drop automatically — the engine behind every countdown on the storefront.">
+          {section === "markdown" && (
           <div className="flex flex-wrap items-end gap-2">
             <Labeled label="First drop after (days)">
               <Input value={mdDays} onChange={setMdDays} disabled={disabled} />
@@ -143,11 +263,9 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
-      </div>
+          )}
 
-      {/* Commission tiers */}
-      <Card title="Commission tiers" sub="Hoosa's cut by final sale price. The seller keeps the rest — shown live on the sell page.">
+          {section === "tiers" && (
         <ul className="space-y-2">
           {tiers.map((t) => (
             <li key={t.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-4 py-3 text-sm">
@@ -174,11 +292,10 @@ export function SettingsForms({
             </li>
           ))}
         </ul>
-      </Card>
+          )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {/* Zones */}
-        <Card title="Pickup & delivery zones" sub="Where Hoosa operates.">
+          {section === "zones" && (
+          <>
           <ul className="space-y-1.5">
             {zones.map((z) => (
               <li key={z.id} className="flex items-center justify-between rounded-xl border border-border px-4 py-2.5 text-sm">
@@ -213,10 +330,11 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
+          </>
+          )}
 
-        {/* Categories */}
-        <Card title="Categories" sub="What Hoosa accepts, and the default custody model for each.">
+          {section === "categories" && (
+          <>
           <ul className="space-y-1.5">
             {categories.map((c) => (
               <li key={c.id} className="flex items-center justify-between rounded-xl border border-border px-4 py-2.5 text-sm">
@@ -265,12 +383,10 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
-      </div>
+          </>
+          )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {/* What we accept */}
-        <Card title="What we accept" sub="Items bigger or heavier than this are declined at intake. These limits govern the seller wizard live.">
+          {section === "scope" && (
           <div className="flex flex-wrap items-end gap-2">
             <Labeled label="Max weight (kg)">
               <Input value={maxKg} onChange={setMaxKg} disabled={disabled} narrow />
@@ -292,10 +408,9 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
+          )}
 
-        {/* Pickup visit fee */}
-        <Card title="Pickup visit fee" sub="Charged when a seller books a home visit — credited back to their wallet on their first sale.">
+          {section === "visitFee" && (
           <div className="flex items-center gap-2">
             <Input value={fee} onChange={setFee} prefix="AED" disabled={disabled} />
             <SaveBtn
@@ -303,10 +418,9 @@ export function SettingsForms({
               onClick={() => run(() => updateSetting("visit_fee", { amount: parseFloat(fee) }), "Visit fee updated.")}
             />
           </div>
-        </Card>
+          )}
 
-        {/* Delivery */}
-        <Card title="Delivery" sub="What buyers pay for delivery. Set 0 for free delivery on everything.">
+          {section === "delivery" && (
           <div className="flex flex-wrap items-end gap-2">
             <Labeled label="Delivery fee">
               <Input value={delAmt} onChange={setDelAmt} prefix="AED" disabled={disabled} narrow />
@@ -328,10 +442,9 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
+          )}
 
-        {/* Tax */}
-        <Card title="Tax (VAT)" sub="UAE VAT settings used on invoices and receipts.">
+          {section === "tax" && (
           <div className="flex flex-wrap items-end gap-2">
             <Labeled label="VAT %">
               <Input value={vat} onChange={setVat} suffix="%" disabled={disabled} narrow />
@@ -370,12 +483,11 @@ export function SettingsForms({
               }
             />
           </div>
-        </Card>
-      </div>
+          )}
 
-      {/* Business details */}
-      <Card title="Business details" sub="Shown to customers in emails, receipts, and support links.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {section === "business" && (
+          <>
+        <div className="grid gap-3 sm:grid-cols-2">
           <Labeled label="Business name">
             <TextInput value={bizName} onChange={setBizName} disabled={disabled} />
           </Labeled>
@@ -406,10 +518,11 @@ export function SettingsForms({
             }
           />
         </div>
-      </Card>
+          </>
+          )}
 
-      {/* System users & roles */}
-      <Card title="System users & roles" sub="Who can access the operations console. ops_agent & driver operate; admin can also configure and manage roles.">
+          {section === "staff" && (
+          <>
         <ul className="space-y-1.5">
           {staff.length === 0 && <li className="text-sm text-muted">No staff yet.</li>}
           {staff.map((s) => (
@@ -475,7 +588,16 @@ export function SettingsForms({
             }
           />
         </div>
-      </Card>
+          </>
+          )}
+        </Card>
+
+        {!amAdmin && (
+          <p className="text-xs text-muted">
+            You can see these settings but not change them — ask an admin.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
